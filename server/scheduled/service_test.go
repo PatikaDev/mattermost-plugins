@@ -91,24 +91,28 @@ func (f *fakeMM) GetChannel(id string) (*model.Channel, error) {
 	}
 	return nil, errors.New("not found")
 }
+
 func (f *fakeMM) GetPost(id string) (*model.Post, error) {
 	if p, ok := f.posts[id]; ok {
 		return p, nil
 	}
 	return nil, errors.New("not found")
 }
+
 func (f *fakeMM) GetUser(id string) (*model.User, error) {
 	if u, ok := f.users[id]; ok {
 		return u, nil
 	}
 	return nil, errors.New("not found")
 }
+
 func (f *fakeMM) GetFileInfo(id string) (*model.FileInfo, error) {
 	if fi, ok := f.files[id]; ok {
 		return fi, nil
 	}
 	return nil, errors.New("not found")
 }
+
 func (f *fakeMM) CreatePost(p *model.Post) error {
 	if f.createErr != nil {
 		return f.createErr
@@ -116,6 +120,7 @@ func (f *fakeMM) CreatePost(p *model.Post) error {
 	f.created = append(f.created, p)
 	return nil
 }
+
 func (f *fakeMM) DirectMessage(userID, msg string) error {
 	f.dms = append(f.dms, userID+"|"+msg)
 	return nil
@@ -190,7 +195,7 @@ func TestCreateRejectsWhenUserLacksPermission(t *testing.T) {
 
 func TestCreateEnforcesPerUserLimit(t *testing.T) {
 	s, _, _, _ := newTestService()
-	for i := 0; i < MaxPerUser; i++ {
+	for range MaxPerUser {
 		_, err := s.Create("alice", CreateRequest{ChannelID: "town", Message: "x", SendAt: in(time.Hour)})
 		require.NoError(t, err)
 	}

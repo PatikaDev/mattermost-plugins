@@ -104,7 +104,7 @@ export default function ScheduleButton(props: Props) {
     const rect = buttonRef.current?.getBoundingClientRect();
     const menuStyle: React.CSSProperties = rect ? {
         bottom: (window.innerHeight - rect.top) + 8,
-        left: Math.max(8, Math.min(rect.left - 120, window.innerWidth - 300)),
+        left: Math.max(8, Math.min(rect.left - 120, window.innerWidth - 348)),
     } : {};
 
     return (

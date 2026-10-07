@@ -1,223 +1,127 @@
-# Plugin Starter Template
+# Scheduled Messages for Mattermost
 
-[![Build Status](https://github.com/mattermost/mattermost-plugin-starter-template/actions/workflows/ci.yml/badge.svg)](https://github.com/mattermost/mattermost-plugin-starter-template/actions/workflows/ci.yml)
-[![E2E Status](https://github.com/mattermost/mattermost-plugin-starter-template/actions/workflows/e2e.yml/badge.svg)](https://github.com/mattermost/mattermost-plugin-starter-template/actions/workflows/e2e.yml)
+Write a message now, send it later. Schedule posts — with attachments — in channels, direct
+messages, group messages and thread replies, straight from the message box. Works on
+Mattermost **Team Edition** and every other edition.
 
-This plugin serves as a starting point for writing a Mattermost plugin. Feel free to base your own plugin off this repository.
+![The Scheduled messages panel](docs/images/panel.png)
 
-To learn more about plugins, see [our plugin documentation](https://developers.mattermost.com/extend/plugins/).
+## Features
 
-This template requires node v16 and npm v8. You can download and install nvm to manage your node versions by following the instructions [here](https://github.com/nvm-sh/nvm). Once you've setup the project simply run `nvm i` within the root folder to use the suggested version of node.
+- **🕘 Clock button in every message box** — the channel box and thread replies. Pick
+  **In 1 hour**, **Tomorrow at 9:00**, **Next Monday at 9:00**, or **Custom time…**. The box is
+  cleared and a short "Scheduled for …" note appears, with a link to the queue.
+- **Attachments too:** files you've added to the message box go out with the message.
+- **Sent as you**, in the same channel or thread, as if you had pressed Enter at that moment —
+  mentions and notifications work normally.
+- **Scheduled messages panel** (clock icon in the app bar / channel header): every message
+  you have queued, across all channels, with **Send now**, **Change time** and **Delete**.
+- **Your time zone:** times are picked and shown in the time zone from your Mattermost profile
+  (*Settings → Display → Timezone*), in 12- or 24-hour format as you've set it.
+- **Safe when things change:** just before sending, the plugin checks again that you can still
+  post there (not removed from the channel, channel not archived, thread not deleted). If not,
+  the message isn't posted; it's kept in your panel as **failed**, and the *Scheduled Messages*
+  bot sends you a direct message with the reason and your text, so nothing is lost.
+- **Live everywhere:** the panel updates in all your open tabs and devices when a message is
+  sent, rescheduled or fails.
 
-## Getting Started
-Use GitHub's template feature to make a copy of this repository by clicking the "Use this template" button.
+| Pick a time | Custom time | Confirmation |
+|---|---|---|
+| ![Schedule menu](docs/images/schedule-menu.png) | ![Custom time dialog](docs/images/custom-time.png) | ![Scheduled toast](docs/images/toast.png) |
 
-Alternatively shallow clone the repository matching your plugin name:
-```
-git clone --depth 1 https://github.com/mattermost/mattermost-plugin-starter-template com.example.my-plugin
-```
+## Why a plugin?
 
-Note that this project uses [Go modules](https://github.com/golang/go/wiki/Modules). Be sure to locate the project outside of `$GOPATH`.
+Mattermost has built-in message scheduling, but only on licensed editions (Professional and
+above). This plugin brings it to Team Edition, and works the same on any edition.
 
-Edit the following files:
-1. `plugin.json` with your `id`, `name`, and `description`:
-```json
-{
-    "id": "com.example.my-plugin",
-    "name": "My Plugin",
-    "description": "A plugin to enhance Mattermost."
-}
-```
+## Install
 
-2. `go.mod` with your Go module path, following the `<hosting-site>/<repository>/<module>` convention:
-```
-module github.com/example/my-plugin
-```
+Requires Mattermost **10.11** or later. Tested on **11.7** and **12.0** with the same build.
 
-3. Replace all occurrences of `github.com/mattermost/mattermost-plugin-starter-template` in the codebase with your Go module path:
+1. Download `dev.patika.scheduled-messages-<version>.tar.gz` from the
+   [latest release](https://github.com/PatikaDev/mattermost-plugin-scheduled-messages/releases/latest)
+   (`SHA256SUMS` is attached for verification).
+2. **System Console → Plugins → Plugin Management → Upload Plugin**, choose the file, then
+   **Enable**. Plugin uploads must be allowed (`PluginSettings.EnableUploads`).
+
+Or with `mmctl`:
+
 ```bash
-sed -i '' 's|github.com/mattermost/mattermost-plugin-starter-template|github.com/example/my-plugin|g' server/*.go
+mmctl plugin add dev.patika.scheduled-messages-<version>.tar.gz
+mmctl plugin enable dev.patika.scheduled-messages
 ```
 
-4. Replace `.golangci.yml` `local-prefixes` attribute with your Go module path:
-```yml
-linters-settings:
-  # [...]
-  goimports:
-    local-prefixes: github.com/example/my-plugin
-```
+Users may need to reload the app (Ctrl/Cmd + R) to see the clock button. There is nothing to
+configure.
 
-5. Build your plugin:
-```
-make
-```
+## Using it
 
-This will produce a single plugin file (with support for multiple architectures) for upload to your Mattermost server:
+1. Write your message (and attach files if you like) in a channel, DM or thread reply.
+2. Click the **clock** next to the formatting buttons and pick a time — or **Custom time…** for
+   any date and time up to a year ahead.
+3. To see, send early, reschedule or delete your queued messages, click **View** in the
+   confirmation or the **clock icon** in the app bar.
 
-```
-dist/com.example.my-plugin.tar.gz
-```
+### Good to know
+
+- Messages are sent by a job that runs **once a minute**, so they go out within a minute of
+  the chosen time. If the server is down at that moment, they go out as soon as it is back.
+- Limits: up to **200** queued messages per person, **10** attachments per message, at least
+  **30 seconds** and at most **one year** ahead.
+- Scheduled messages are private to their author — nobody else, admins included, sees them in
+  the panel.
+- Scheduled posts carry Mattermost's standard `from_plugin` flag in their metadata; they look
+  and behave like any other post from you.
+- Mobile apps don't show plugin buttons, so scheduling is done from the web or desktop app;
+  the messages themselves arrive on every device as usual.
+
+## How it works
+
+The webapp part adds the button, the panel and the dialogs. The server part stores each
+scheduled message in the plugin's key-value store, and a cluster-safe job sends due messages
+once a minute through Mattermost's plugin API, as the author. Each message is claimed with a
+compare-and-set before sending, so it is posted at most once even with several app servers.
+If a send is interrupted and the plugin can't tell whether it went out, the message is marked
+failed with a note rather than risking a duplicate.
+
+Attachments are the files you uploaded to the message box; they stay unattached on the server
+until the message is sent, exactly as with a draft.
+
+## Privacy
+
+Scheduled messages and their attachments are stored on your own Mattermost server (the
+plugin's key-value store and normal file storage). The plugin sends nothing anywhere else.
 
 ## Development
 
-To avoid having to manually install your plugin, build and deploy your plugin using one of the following options. In order for the below options to work, you must first enable plugin uploads via your config.json or API and restart Mattermost.
+Requirements: Node 24.21.0 (see `.node-version`), Go (see `go.mod`), Docker for the
+end-to-end tests.
 
-```json
-    "PluginSettings" : {
-        ...
-        "EnableUploads" : true
-    }
-```
-
-### Development guidance
-
-1. Fewer packages is better: default to the main package unless there's good reason for a new package.
-
-2. Coupling implies same package: don't jump through hoops to break apart code that's naturally coupled.
-
-3. New package for a new interface: a classic example is the sqlstore with layers for monitoring performance, caching and mocking.
-
-4. New package for upstream integration: a discrete client package for interfacing with a 3rd party is often a great place to break out into a new package
-
-### Modifying the server boilerplate
-
-The server code comes with some boilerplate for creating an api, using slash commands, accessing the kvstore and using the cluster package for jobs.
-
-#### Api
-
-api.go implements the ServeHTTP hook which allows the plugin to implement the http.Handler interface. Requests destined for the `/plugins/{id}` path will be routed to the plugin. This file also contains a sample `HelloWorld` endpoint that is tested in plugin_test.go.
-
-#### Command package
-
-This package contains the boilerplate for adding a slash command and an instance of it is created in the `OnActivate` hook in plugin.go. If you don't need it you can delete the package and remove any reference to `commandClient` in plugin.go. The package also contains an example of how to create a mock for testing.
-
-#### KVStore package
-
-This is a central place for you to access the KVStore methods that are available in the `pluginapi.Client`. The package contains an interface for you to define your methods that will wrap the KVStore methods. An instance of the KVStore is created in the `OnActivate` hook.
-
-### Deploying with Local Mode
-
-If your Mattermost server is running locally, you can enable [local mode](https://docs.mattermost.com/administration/mmctl-cli-tool.html#local-mode) to streamline deploying your plugin. Edit your server configuration as follows:
-
-```json
-{
-    "ServiceSettings": {
-        ...
-        "EnableLocalMode": true,
-        "LocalModeSocketLocation": "/var/tmp/mattermost_local.socket"
-    },
-}
-```
-
-and then deploy your plugin:
-```
-make deploy
-```
-
-You may also customize the Unix socket path:
 ```bash
-export MM_LOCALSOCKETPATH=/var/tmp/alternate_local.socket
-make deploy
+go test -race ./server/...                         # server unit tests
+cd webapp && npm ci
+npm run lint && npm run check-types && npm test    # webapp unit tests
+cd .. && make dist                                 # → dist/dev.patika.scheduled-messages-<version>.tar.gz
 ```
 
-If developing a plugin with a webapp, watch for changes and deploy those automatically:
+End-to-end tests drive real Chrome against a throwaway Mattermost in Docker and wait for the
+real minute job (about 3 minutes in total):
+
 ```bash
-export MM_SERVICESETTINGS_SITEURL=http://localhost:8065
-export MM_ADMIN_TOKEN=j44acwd8obn78cdcx7koid4jkr
-make watch
+cd e2e && npm ci && npx playwright install chrome
+MM_VERSION=11.7.11 ./scripts/start-server.sh       # or 12.0.0, …
+npx playwright test
+npm run server:stop
 ```
 
-### Deploying with credentials
+The webapp is built to run unchanged on React 17, 18 and 19 (the server's own React is used at
+runtime). See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-Alternatively, you can authenticate with the server's API with credentials:
-```bash
-export MM_SERVICESETTINGS_SITEURL=http://localhost:8065
-export MM_ADMIN_USERNAME=admin
-export MM_ADMIN_PASSWORD=password
-make deploy
-```
+Releases are cut by pushing a `v*` tag; CI builds the plugin and attaches it to a GitHub
+Release.
 
-or with a [personal access token](https://docs.mattermost.com/developer/personal-access-tokens.html):
-```bash
-export MM_SERVICESETTINGS_SITEURL=http://localhost:8065
-export MM_ADMIN_TOKEN=j44acwd8obn78cdcx7koid4jkr
-make deploy
-```
+## License
 
-### Releasing new versions
-
-The version of a plugin is determined at compile time, automatically populating a `version` field in the [plugin manifest](plugin.json):
-* If the current commit matches a tag, the version will match after stripping any leading `v`, e.g. `1.3.1`.
-* Otherwise, the version will combine the nearest tag with `git rev-parse --short HEAD`, e.g. `1.3.1+d06e53e1`.
-* If there is no version tag, an empty version will be combined with the short hash, e.g. `0.0.0+76081421`.
-
-To disable this behaviour, manually populate and maintain the `version` field.
-
-## How to Release
-
-To trigger a release, follow these steps:
-
-1. **For Patch Release:** Run the following command:
-    ```
-    make patch
-    ```
-   This will release a patch change.
-
-2. **For Minor Release:** Run the following command:
-    ```
-    make minor
-    ```
-   This will release a minor change.
-
-3. **For Major Release:** Run the following command:
-    ```
-    make major
-    ```
-   This will release a major change.
-
-4. **For Patch Release Candidate (RC):** Run the following command:
-    ```
-    make patch-rc
-    ```
-   This will release a patch release candidate.
-
-5. **For Minor Release Candidate (RC):** Run the following command:
-    ```
-    make minor-rc
-    ```
-   This will release a minor release candidate.
-
-6. **For Major Release Candidate (RC):** Run the following command:
-    ```
-    make major-rc
-    ```
-   This will release a major release candidate.
-
-## Q&A
-
-### How do I make a server-only or web app-only plugin?
-
-Simply delete the `server` or `webapp` folders and remove the corresponding sections from `plugin.json`. The build scripts will skip the missing portions automatically.
-
-### How do I include assets in the plugin bundle?
-
-Place them into the `assets` directory. To use an asset at runtime, build the path to your asset and open as a regular file:
-
-```go
-bundlePath, err := p.API.GetBundlePath()
-if err != nil {
-    return errors.Wrap(err, "failed to get bundle path")
-}
-
-profileImage, err := ioutil.ReadFile(filepath.Join(bundlePath, "assets", "profile_image.png"))
-if err != nil {
-    return errors.Wrap(err, "failed to read profile image")
-}
-
-if appErr := p.API.SetProfileImage(userID, profileImage); appErr != nil {
-    return errors.Wrap(err, "failed to set profile image")
-}
-```
-
-### How do I build the plugin with unminified JavaScript?
-Setting the `MM_DEBUG` environment variable will invoke the debug builds. The simplist way to do this is to simply include this variable in your calls to `make` (e.g. `make dist MM_DEBUG=1`).
+[Apache License 2.0](LICENSE). Built on the
+[Mattermost plugin starter template](https://github.com/mattermost/mattermost-plugin-starter-template)
+— see [NOTICE](NOTICE). Made by [Patika](https://patika.dev).

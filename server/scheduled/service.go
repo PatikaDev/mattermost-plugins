@@ -239,7 +239,7 @@ func (s *Service) failureMessage(p *Post, reason string) string {
 	b.WriteString("It is still in your Scheduled messages list, where you can change the time or delete it.")
 	if strings.TrimSpace(p.Message) != "" {
 		b.WriteString("\n\nThe message was:\n")
-		for _, line := range strings.Split(p.Message, "\n") {
+		for line := range strings.SplitSeq(p.Message, "\n") {
 			b.WriteString("> " + line + "\n")
 		}
 	}

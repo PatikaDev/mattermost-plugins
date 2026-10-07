@@ -29,7 +29,7 @@
 .sm-menu {
     position: fixed;
     z-index: 1100;
-    width: 290px;
+    width: 340px;
     padding: 8px 0;
     border: 1px solid rgba(var(--center-channel-color-rgb), 0.16);
     border-radius: 4px;
@@ -58,6 +58,10 @@
     font-size: 14px;
     text-align: left;
     cursor: pointer;
+}
+
+.sm-menu__item > span {
+    white-space: nowrap;
 }
 
 .sm-menu__item:hover:not(:disabled) {
