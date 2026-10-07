@@ -116,9 +116,12 @@ func (f *fakeMM) CreatePost(p *model.Post) error {
 	f.created = append(f.created, p)
 	return nil
 }
-func (f *fakeMM) DirectMessage(userID, msg string) error { f.dms = append(f.dms, userID+"|"+msg); return nil }
-func (f *fakeMM) NotifyChanged(userID string)           { f.notified = append(f.notified, userID) }
-func (f *fakeMM) NewID() string                         { f.nextID++; return fmt.Sprintf("id%024d", f.nextID) }
+func (f *fakeMM) DirectMessage(userID, msg string) error {
+	f.dms = append(f.dms, userID+"|"+msg)
+	return nil
+}
+func (f *fakeMM) NotifyChanged(userID string) { f.notified = append(f.notified, userID) }
+func (f *fakeMM) NewID() string               { f.nextID++; return fmt.Sprintf("id%024d", f.nextID) }
 
 type fixedClock struct{ t time.Time }
 
