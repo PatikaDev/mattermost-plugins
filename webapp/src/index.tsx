@@ -28,7 +28,7 @@ export default class Plugin {
         // The "Scheduled messages" panel, opened from the channel header / app bar.
         const {showRHSPlugin, toggleRHSPlugin} = registry.registerRightHandSidebarComponent(Panel, 'Scheduled messages');
         registry.registerChannelHeaderButtonAction(
-            <ClockIcon/>,
+            <ClockIcon label='Scheduled messages'/>,
             () => dispatch(toggleRHSPlugin),
             'Scheduled messages',
             'Scheduled messages',

@@ -3,7 +3,9 @@
 
 import React from 'react';
 
-export function ClockIcon({size = 18}: {size?: number}) {
+// With a label, the icon names its button for screen readers: Mattermost renders app-bar
+// items as an unlabeled role="button" around the plugin's icon.
+export function ClockIcon({size = 18, label}: {size?: number; label?: string}) {
     return (
         <svg
             width={size}
@@ -14,7 +16,7 @@ export function ClockIcon({size = 18}: {size?: number}) {
             strokeWidth='2'
             strokeLinecap='round'
             strokeLinejoin='round'
-            aria-hidden='true'
+            {...(label ? {role: 'img', 'aria-label': label} : {'aria-hidden': 'true'})}
         >
             <circle
                 cx='12'
