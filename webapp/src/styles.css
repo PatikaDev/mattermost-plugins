@@ -1,0 +1,228 @@
+/* Copyright (c) 2026-present Patika. All Rights Reserved. See LICENSE for license information. */
+/* Mattermost theme variables keep everything right in light and dark themes. */
+
+.sm-toolbar-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: rgba(var(--center-channel-color-rgb), 0.56);
+    cursor: pointer;
+}
+
+.sm-toolbar-button:hover:not(:disabled),
+.sm-toolbar-button--active {
+    background: rgba(var(--center-channel-color-rgb), 0.08);
+    color: rgba(var(--center-channel-color-rgb), 0.72);
+}
+
+.sm-toolbar-button:disabled {
+    opacity: 0.48;
+    cursor: default;
+}
+
+.sm-menu {
+    position: fixed;
+    z-index: 1100;
+    width: 290px;
+    padding: 8px 0;
+    border: 1px solid rgba(var(--center-channel-color-rgb), 0.16);
+    border-radius: 4px;
+    background: var(--center-channel-bg);
+    color: var(--center-channel-color);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.sm-menu__title {
+    padding: 6px 16px 8px;
+    color: rgba(var(--center-channel-color-rgb), 0.56);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.sm-menu__item {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 8px 16px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.sm-menu__item:hover:not(:disabled) {
+    background: rgba(var(--center-channel-color-rgb), 0.08);
+}
+
+.sm-menu__error {
+    padding: 4px 16px 0;
+}
+
+.sm-muted {
+    color: rgba(var(--center-channel-color-rgb), 0.64);
+}
+
+.sm-error {
+    color: var(--error-text);
+}
+
+.sm-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.sm-dialog {
+    width: min(420px, calc(100vw - 32px));
+    padding: 24px;
+    border-radius: 8px;
+    background: var(--center-channel-bg);
+    color: var(--center-channel-color);
+    box-shadow: 0 20px 32px rgba(0, 0, 0, 0.12);
+}
+
+.sm-dialog h2 {
+    margin: 0 0 16px;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.sm-dialog__fields {
+    display: flex;
+    gap: 12px;
+}
+
+.sm-dialog__fields label {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 4px;
+    font-weight: normal;
+}
+
+.sm-dialog__fields input {
+    padding: 8px;
+    border: 1px solid rgba(var(--center-channel-color-rgb), 0.16);
+    border-radius: 4px;
+    background: var(--center-channel-bg);
+    color: inherit;
+    color-scheme: light dark;
+}
+
+.sm-dialog__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.sm-panel {
+    height: 100%;
+    overflow-y: auto;
+    padding: 12px 16px;
+}
+
+.sm-empty {
+    margin-top: 32px;
+    text-align: center;
+}
+
+.sm-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.sm-item {
+    margin-bottom: 12px;
+    padding: 12px;
+    border: 1px solid rgba(var(--center-channel-color-rgb), 0.16);
+    border-radius: 8px;
+}
+
+.sm-item--failed {
+    border-color: var(--error-text);
+}
+
+.sm-item__meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 12px;
+}
+
+.sm-item__where {
+    overflow: hidden;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sm-item__when {
+    color: rgba(var(--center-channel-color-rgb), 0.72);
+    white-space: nowrap;
+}
+
+.sm-item__text {
+    margin-bottom: 6px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.sm-item__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.sm-toast {
+    position: fixed;
+    bottom: 96px;
+    left: 50%;
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: calc(100vw - 32px);
+    padding: 10px 14px;
+    transform: translateX(-50%);
+    border-radius: 8px;
+    background: var(--center-channel-color);
+    color: var(--center-channel-bg);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+}
+
+.sm-toast__link,
+.sm-toast__close {
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+.sm-toast__link {
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+.sm-toast__close {
+    font-size: 18px;
+    line-height: 1;
+}
