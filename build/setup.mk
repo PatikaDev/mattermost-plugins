@@ -14,10 +14,10 @@ BUILD_TAG_CURRENT = $(patsubst $(TAG_PREFIX)/%,%,$(shell git tag --points-at HEA
 RELEASE_NOTES_BASE = https://github.com/PatikaDev/mattermost-plugins/releases/tag/$(TAG_PREFIX)
 
 # Ensure that the build tools are compiled. Go's caching makes this quick.
-$(shell cd build/manifest && $(GO) build -ldflags '-X "main.BuildHashShort=$(BUILD_HASH_SHORT)" -X "main.BuildTagLatest=$(BUILD_TAG_LATEST)" -X "main.BuildTagCurrent=$(BUILD_TAG_CURRENT)" -X "main.ReleaseNotesBase=$(RELEASE_NOTES_BASE)"' -o ../bin/manifest)
+$(shell mkdir -p build/bin && cd $(BUILD_ROOT)/manifest && $(GO) build -ldflags '-X "main.BuildHashShort=$(BUILD_HASH_SHORT)" -X "main.BuildTagLatest=$(BUILD_TAG_LATEST)" -X "main.BuildTagCurrent=$(BUILD_TAG_CURRENT)" -X "main.ReleaseNotesBase=$(RELEASE_NOTES_BASE)"' -o $(CURDIR)/build/bin/manifest)
 
 # Ensure that the deployment tools are compiled. Go's caching makes this quick.
-$(shell cd build/pluginctl && $(GO) build -o ../bin/pluginctl)
+$(shell cd $(BUILD_ROOT)/pluginctl && $(GO) build -o $(CURDIR)/build/bin/pluginctl)
 
 # Extract the plugin id from the manifest.
 PLUGIN_ID ?= $(shell build/bin/manifest id)

@@ -1,3 +1,9 @@
 node_modules/
 dist/
+bin/
+plugins/*/build/bin/
+plugins/*/webapp/src/manifest.ts
+plugins/*/server/manifest.go
 .DS_Store
+.idea/
+.vscode
