@@ -111,7 +111,7 @@ message"; Quick Create covers free-text, repeating and channel reminders.
 ## Install
 
 1. Download `dev.patika.quick-create-<version>.tar.gz` from the
-   [latest release](https://github.com/PatikaDev/mattermost-plugin-quick-create/releases/latest)
+   [latest quick-create release](https://github.com/PatikaDev/mattermost-plugins/releases?q=quick-create&expanded=true)
    (`SHA256SUMS` is attached for verification).
 2. **System Console → Plugins → Plugin Management → Upload Plugin**, choose the file, then
    **Enable**. Plugin uploads must be allowed (`PluginSettings.EnableUploads`).

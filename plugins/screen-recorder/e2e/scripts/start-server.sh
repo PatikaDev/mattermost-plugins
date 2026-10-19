@@ -11,7 +11,7 @@ echo "Starting Mattermost ${MM_VERSION:-11.7.11}…"
 "${COMPOSE[@]}" up -d --wait postgres >/dev/null
 "${COMPOSE[@]}" up -d mattermost >/dev/null
 for _ in $(seq 1 90); do
-    if [ "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8066/api/v4/system/ping)" = 200 ]; then break; fi
+    if [ "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8070/api/v4/system/ping)" = 200 ]; then break; fi
     sleep 2
 done
 mmctl version | grep -m1 Version
@@ -26,4 +26,4 @@ CONTAINER=$("${COMPOSE[@]}" ps -q mattermost)
 docker cp "$TARBALL" "$CONTAINER:/mattermost/data/plugin.tar.gz"
 mmctl plugin add --force /mattermost/data/plugin.tar.gz
 mmctl plugin enable dev.patika.screen-recorder
-echo "Ready: http://localhost:8066 (admin / member, password Test-Passw0rd!) with $(basename "$TARBALL")"
+echo "Ready: http://localhost:8070 (admin / member, password Test-Passw0rd!) with $(basename "$TARBALL")"

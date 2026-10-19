@@ -1,4 +1,4 @@
-module github.com/PatikaDev/mattermost-plugin-all-unreads
+module github.com/PatikaDev/mattermost-plugins/plugins/all-unreads
 
 go 1.25
 

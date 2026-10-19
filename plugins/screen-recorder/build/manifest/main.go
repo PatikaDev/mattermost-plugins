@@ -47,6 +47,8 @@ var (
 	BuildHashShort  string
 	BuildTagLatest  string
 	BuildTagCurrent string
+	// ReleaseNotesBase is the monorepo's release URL prefix for this plugin's tags.
+	ReleaseNotesBase string
 )
 
 func main() {
@@ -140,7 +142,11 @@ func findManifest() (*model.Manifest, error) {
 
 	// If no release notes specified, generate one from the latest tag, if present.
 	if manifest.ReleaseNotesURL == "" && BuildTagLatest != "" {
-		releaseNotesURL, err := url.JoinPath(manifest.HomepageURL, "releases", "tag", BuildTagLatest)
+		base, parts := manifest.HomepageURL, []string{"releases", "tag", BuildTagLatest}
+		if ReleaseNotesBase != "" {
+			base, parts = ReleaseNotesBase, []string{BuildTagLatest}
+		}
+		releaseNotesURL, err := url.JoinPath(base, parts...)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to build release notes URL")
 		}

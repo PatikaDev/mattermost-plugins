@@ -61,4 +61,4 @@ formatters:
           replacement: any
     goimports:
       local-prefixes:
-        - github.com/PatikaDev/mattermost-plugin-screen-recorder
+        - github.com/PatikaDev/mattermost-plugins/plugins/screen-recorder

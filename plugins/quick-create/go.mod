@@ -1,4 +1,4 @@
-module github.com/PatikaDev/mattermost-plugin-quick-create
+module github.com/PatikaDev/mattermost-plugins/plugins/quick-create
 
 go 1.25
 

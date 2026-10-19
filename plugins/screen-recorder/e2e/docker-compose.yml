@@ -18,11 +18,11 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    ports: ["8066:8065"]
+    ports: ["8070:8065"]
     environment:
       MM_SQLSETTINGS_DRIVERNAME: postgres
       MM_SQLSETTINGS_DATASOURCE: "postgres://mmuser:mmuser@postgres:5432/mattermost?sslmode=disable"
-      MM_SERVICESETTINGS_SITEURL: "http://localhost:8066"
+      MM_SERVICESETTINGS_SITEURL: "http://localhost:8070"
       MM_SERVICESETTINGS_ENABLELOCALMODE: "true"
       MM_PLUGINSETTINGS_ENABLE: "true"
       MM_PLUGINSETTINGS_ENABLEUPLOADS: "true"

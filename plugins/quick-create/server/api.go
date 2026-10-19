@@ -12,8 +12,8 @@ import (
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/plugin"
 
-	"github.com/PatikaDev/mattermost-plugin-quick-create/server/reminders"
-	"github.com/PatikaDev/mattermost-plugin-quick-create/server/shortcuts"
+	"github.com/PatikaDev/mattermost-plugins/plugins/quick-create/server/reminders"
+	"github.com/PatikaDev/mattermost-plugins/plugins/quick-create/server/shortcuts"
 )
 
 const maxBodyBytes = 64 * 1024

@@ -38,7 +38,7 @@ Requires Mattermost **10.11** or later.
 ## Install
 
 1. Download `dev.patika.screen-recorder-<version>.tar.gz` from the
-   [latest release](https://github.com/PatikaDev/mattermost-plugin-screen-recorder/releases/latest)
+   [latest screen-recorder release](https://github.com/PatikaDev/mattermost-plugins/releases?q=screen-recorder&expanded=true)
    (`SHA256SUMS` is attached for verification).
 2. **System Console → Plugins → Plugin Management → Upload Plugin**, choose the file, then
    **Enable**. Plugin uploads must be allowed (`PluginSettings.EnableUploads`).

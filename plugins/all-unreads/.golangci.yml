@@ -61,4 +61,4 @@ formatters:
           replacement: any
     goimports:
       local-prefixes:
-        - github.com/PatikaDev/mattermost-plugin-all-unreads
+        - github.com/PatikaDev/mattermost-plugins/plugins/all-unreads

@@ -61,4 +61,4 @@ formatters:
           replacement: any
     goimports:
       local-prefixes:
-        - github.com/PatikaDev/mattermost-plugin-reaction-notifications
+        - github.com/PatikaDev/mattermost-plugins/plugins/reaction-notifications

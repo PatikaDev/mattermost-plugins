@@ -15,7 +15,7 @@ export default defineConfig({
     retries: 0,
     reporter: [['list']],
     use: {
-        baseURL: 'http://localhost:8066',
+        baseURL: 'http://localhost:8070',
         viewport: {width: 1400, height: 900},
         permissions: ['microphone'],
         launchOptions: {args: mediaFlags},

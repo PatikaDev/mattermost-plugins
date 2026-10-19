@@ -14,9 +14,9 @@ import (
 	"github.com/mattermost/mattermost/server/public/pluginapi/cluster"
 	"github.com/pkg/errors"
 
-	"github.com/PatikaDev/mattermost-plugin-quick-create/server/broadcast"
-	"github.com/PatikaDev/mattermost-plugin-quick-create/server/reminders"
-	"github.com/PatikaDev/mattermost-plugin-quick-create/server/shortcuts"
+	"github.com/PatikaDev/mattermost-plugins/plugins/quick-create/server/broadcast"
+	"github.com/PatikaDev/mattermost-plugins/plugins/quick-create/server/reminders"
+	"github.com/PatikaDev/mattermost-plugins/plugins/quick-create/server/shortcuts"
 )
 
 // Plugin implements the interface expected by the Mattermost server to communicate between the server and plugin processes.

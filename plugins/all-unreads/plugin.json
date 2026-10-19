@@ -2,8 +2,8 @@
     "id": "dev.patika.all-unreads",
     "name": "All Unreads",
     "description": "One panel with every unread message across your channels — read them in place and mark all as read, like Slack's All Unreads.",
-    "homepage_url": "https://github.com/PatikaDev/mattermost-plugin-all-unreads",
-    "support_url": "https://github.com/PatikaDev/mattermost-plugin-all-unreads/issues",
+    "homepage_url": "https://github.com/PatikaDev/mattermost-plugins/tree/main/plugins/all-unreads",
+    "support_url": "https://github.com/PatikaDev/mattermost-plugins/issues",
     "icon_path": "assets/all-unreads-icon.svg",
     "min_server_version": "10.11.0",
     "webapp": {

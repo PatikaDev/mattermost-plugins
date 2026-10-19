@@ -1,4 +1,4 @@
-module github.com/PatikaDev/mattermost-plugin-reaction-notifications
+module github.com/PatikaDev/mattermost-plugins/plugins/reaction-notifications
 
 go 1.25
 

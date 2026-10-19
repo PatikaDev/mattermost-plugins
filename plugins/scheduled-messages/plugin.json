@@ -2,8 +2,8 @@
     "id": "dev.patika.scheduled-messages",
     "name": "Scheduled Messages",
     "description": "Write a message now, send it later — with attachments, in channels, DMs and threads.",
-    "homepage_url": "https://github.com/PatikaDev/mattermost-plugin-scheduled-messages",
-    "support_url": "https://github.com/PatikaDev/mattermost-plugin-scheduled-messages/issues",
+    "homepage_url": "https://github.com/PatikaDev/mattermost-plugins/tree/main/plugins/scheduled-messages",
+    "support_url": "https://github.com/PatikaDev/mattermost-plugins/issues",
     "icon_path": "assets/scheduled-messages-icon.svg",
     "min_server_version": "10.11.0",
     "server": {

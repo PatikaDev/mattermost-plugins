@@ -3,7 +3,7 @@
 ## Reporting a vulnerability
 
 Please **do not open a public issue** for security problems. Use GitHub's
-[private vulnerability reporting](https://github.com/PatikaDev/mattermost-plugin-screen-recorder/security/advisories/new)
+[private vulnerability reporting](https://github.com/PatikaDev/mattermost-plugins/security/advisories/new)
 for this repository instead. We aim to acknowledge reports within 5 working days.
 
 ## Scope

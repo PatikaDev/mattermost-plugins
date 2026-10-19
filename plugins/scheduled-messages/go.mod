@@ -1,4 +1,4 @@
-module github.com/PatikaDev/mattermost-plugin-scheduled-messages
+module github.com/PatikaDev/mattermost-plugins/plugins/scheduled-messages
 
 go 1.25
 

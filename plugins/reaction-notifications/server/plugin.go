@@ -13,7 +13,7 @@ import (
 	"github.com/mattermost/mattermost/server/public/pluginapi/cluster"
 	"github.com/pkg/errors"
 
-	"github.com/PatikaDev/mattermost-plugin-reaction-notifications/server/reactions"
+	"github.com/PatikaDev/mattermost-plugins/plugins/reaction-notifications/server/reactions"
 )
 
 // flushEvery is how often grouped reactions are checked; with reactions.GroupFor this sends

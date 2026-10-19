@@ -2,8 +2,8 @@
     "id": "dev.patika.quick-create",
     "name": "Quick Create",
     "description": "Create polls, todos and reminders from a button in the message box — no slash commands to remember.",
-    "homepage_url": "https://github.com/PatikaDev/mattermost-plugin-quick-create",
-    "support_url": "https://github.com/PatikaDev/mattermost-plugin-quick-create/issues",
+    "homepage_url": "https://github.com/PatikaDev/mattermost-plugins/tree/main/plugins/quick-create",
+    "support_url": "https://github.com/PatikaDev/mattermost-plugins/issues",
     "icon_path": "assets/quick-create-icon.svg",
     "min_server_version": "10.11.0",
     "server": {

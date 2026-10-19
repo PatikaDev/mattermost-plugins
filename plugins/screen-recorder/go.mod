@@ -1,4 +1,4 @@
-module github.com/PatikaDev/mattermost-plugin-screen-recorder
+module github.com/PatikaDev/mattermost-plugins/plugins/screen-recorder
 
 go 1.25
 

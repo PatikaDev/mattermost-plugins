@@ -6,11 +6,15 @@ endif
 
 # Gather build variables to inject into the manifest tool
 BUILD_HASH_SHORT = $(shell git rev-parse --short HEAD)
-BUILD_TAG_LATEST = $(shell git describe --tags --match 'v*' --abbrev=0 2>/dev/null)
-BUILD_TAG_CURRENT = $(shell git tag --points-at HEAD)
+# In the PatikaDev/mattermost-plugins monorepo each plugin's tags carry its folder name
+# (e.g. quick-create/v1.2.0); match only ours and strip the prefix so versions stay plain.
+TAG_PREFIX ?= $(notdir $(CURDIR))
+BUILD_TAG_LATEST = $(patsubst $(TAG_PREFIX)/%,%,$(shell git describe --tags --match '$(TAG_PREFIX)/v*' --abbrev=0 2>/dev/null))
+BUILD_TAG_CURRENT = $(patsubst $(TAG_PREFIX)/%,%,$(shell git tag --points-at HEAD --list '$(TAG_PREFIX)/v*'))
+RELEASE_NOTES_BASE = https://github.com/PatikaDev/mattermost-plugins/releases/tag/$(TAG_PREFIX)
 
 # Ensure that the build tools are compiled. Go's caching makes this quick.
-$(shell cd build/manifest && $(GO) build -ldflags '-X "main.BuildHashShort=$(BUILD_HASH_SHORT)" -X "main.BuildTagLatest=$(BUILD_TAG_LATEST)" -X "main.BuildTagCurrent=$(BUILD_TAG_CURRENT)"' -o ../bin/manifest)
+$(shell cd build/manifest && $(GO) build -ldflags '-X "main.BuildHashShort=$(BUILD_HASH_SHORT)" -X "main.BuildTagLatest=$(BUILD_TAG_LATEST)" -X "main.BuildTagCurrent=$(BUILD_TAG_CURRENT)" -X "main.ReleaseNotesBase=$(RELEASE_NOTES_BASE)"' -o ../bin/manifest)
 
 # Ensure that the deployment tools are compiled. Go's caching makes this quick.
 $(shell cd build/pluginctl && $(GO) build -o ../bin/pluginctl)

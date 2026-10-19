@@ -32,7 +32,7 @@ read, channel by channel or all at once. Like Slack's **All Unreads**.
 Requires Mattermost **10.11** or later. Tested on **11.7** and **12.0** with the same build.
 
 1. Download `dev.patika.all-unreads-<version>.tar.gz` from the
-   [latest release](https://github.com/PatikaDev/mattermost-plugin-all-unreads/releases/latest)
+   [latest all-unreads release](https://github.com/PatikaDev/mattermost-plugins/releases?q=all-unreads&expanded=true)
    (`SHA256SUMS` is attached for verification).
 2. **System Console → Plugins → Plugin Management → Upload Plugin**, choose the file, then
    **Enable**. Plugin uploads must be allowed (`PluginSettings.EnableUploads`).
