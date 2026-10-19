@@ -1,0 +1,224 @@
+/* Copyright (c) 2026-present Patika. All Rights Reserved. See LICENSE for license information. */
+/* Mattermost theme variables keep everything right in light and dark themes. */
+
+.au-appbar {
+    position: relative;
+    display: flex;
+    width: 24px;
+    height: 24px;
+    align-items: center;
+    justify-content: center;
+}
+
+.app-bar .au-appbar .au-appbar__badge,
+.au-appbar .au-appbar__badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 8px;
+    width: auto;
+    height: 12px;
+    padding: 0 2px;
+    border: 1px solid var(--sidebar-bg, #1e325c);
+    border-radius: 8px;
+    background: rgba(var(--center-channel-color-rgb), 0.64);
+    box-sizing: content-box;
+    color: var(--center-channel-bg);
+    font-size: 8px;
+    font-weight: 700;
+    line-height: 12px;
+    text-align: center;
+}
+
+.app-bar .au-appbar .au-appbar__badge--mention,
+.au-appbar .au-appbar__badge--mention {
+    background: var(--mention-bg, #d24b4e);
+    color: var(--mention-color, #fff);
+}
+
+.au-panel {
+    height: 100%;
+    overflow-y: auto;
+    padding: 12px 16px 24px;
+    color: var(--center-channel-color);
+}
+
+.au-summary,
+.au-confirm {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.au-confirm {
+    justify-content: flex-start;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: rgba(var(--button-bg-rgb), 0.08);
+    font-weight: normal;
+}
+
+.au-threads {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    border: 1px solid rgba(var(--center-channel-color-rgb), 0.16);
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.au-threads .au-muted {
+    margin-left: auto;
+}
+
+.au-group {
+    margin-bottom: 12px;
+    border: 1px solid rgba(var(--center-channel-color-rgb), 0.16);
+    border-radius: 8px;
+}
+
+.au-group__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(var(--center-channel-color-rgb), 0.08);
+}
+
+.au-group__title {
+    overflow: hidden;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.au-group__title:hover {
+    text-decoration: underline;
+}
+
+.au-group__actions {
+    display: inline-flex;
+    gap: 4px;
+    margin-left: auto;
+}
+
+.au-pill {
+    padding: 0 6px;
+    border-radius: 10px;
+    background: rgba(var(--center-channel-color-rgb), 0.08);
+    color: rgba(var(--center-channel-color-rgb), 0.72);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 18px;
+}
+
+.au-pill--mention {
+    background: var(--mention-bg, #d24b4e);
+    color: var(--mention-color, #fff);
+}
+
+.au-messages {
+    margin: 0;
+    padding: 4px 0;
+    list-style: none;
+}
+
+.au-message {
+    display: flex;
+    gap: 8px;
+    padding: 6px 10px;
+}
+
+.au-avatar {
+    width: 24px;
+    height: 24px;
+    flex: none;
+    border-radius: 50%;
+}
+
+.au-message__body {
+    min-width: 0;
+    flex: 1;
+}
+
+.au-message__meta {
+    display: flex;
+    gap: 6px;
+    align-items: baseline;
+    font-size: 13px;
+}
+
+.au-message__meta .au-muted {
+    font-size: 11px;
+}
+
+.au-text {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    font-size: 13px;
+    word-break: break-word;
+}
+
+.au-text p {
+    margin: 0;
+}
+
+.au-text--plain {
+    white-space: pre-wrap;
+}
+
+.au-more {
+    display: block;
+    width: 100%;
+    padding: 6px 10px 8px;
+    border: 0;
+    background: transparent;
+    color: var(--link-color);
+    font-size: 12px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.au-muted {
+    color: rgba(var(--center-channel-color-rgb), 0.64);
+}
+
+.au-loading {
+    padding: 8px 10px;
+    font-size: 12px;
+}
+
+.au-error {
+    padding: 6px 10px;
+    color: var(--error-text);
+    font-size: 12px;
+}
+
+.au-empty {
+    margin-top: 48px;
+    color: rgba(var(--center-channel-color-rgb), 0.72);
+    text-align: center;
+}
+
+.au-empty__emoji {
+    margin-bottom: 8px;
+    font-size: 32px;
+}
