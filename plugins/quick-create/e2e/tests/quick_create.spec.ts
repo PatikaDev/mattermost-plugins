@@ -1,0 +1,230 @@
+import {expect, test, type Page} from '@playwright/test';
+
+import {api, composer, create, http, login, newSession, openChannel, pluginApi, TEAM, waitFor} from './helpers';
+
+const todoList = (page: Page, list: 'my' | 'in' | 'out') => http(page, 'GET', `/plugins/com.mattermost.plugin-todo/list?list=${list}`) as Promise<Array<{message: string}>>;
+
+async function clearReminders(page: Page) {
+    for (const r of await pluginApi<any[]>(page, 'GET', '/reminders') || []) {
+        await pluginApi(page, 'DELETE', `/reminders/${r.id}`);
+    }
+}
+
+test.describe('Quick Create', () => {
+    test.beforeEach(async ({page}) => {
+        await login(page, 'admin');
+        await clearReminders(page);
+    });
+
+    test('Poll takes any number of options and posts a Matterpoll poll', async ({page}) => {
+        await openChannel(page, 'town-square');
+        await create(page, 'post_textbox', 'Poll');
+
+        const dialog = page.getByRole('dialog').filter({hasText: 'New poll'});
+        const question = `Where should we eat? ${Date.now()}`;
+        await dialog.getByLabel('Question').fill(question);
+        await dialog.getByLabel('Option 1', {exact: true}).fill('Pizza');
+        await dialog.getByLabel('Option 2', {exact: true}).fill('Döner');
+        await dialog.getByLabel('Option 3', {exact: true}).fill('Salad');
+        await dialog.getByLabel('Option 3', {exact: true}).press('Enter'); // Enter adds a row instead of submitting
+        await dialog.getByLabel('Option 4', {exact: true}).fill('The "new" place');
+        await dialog.getByRole('button', {name: '+ Add option'}).click();
+        await dialog.getByLabel('Option 5', {exact: true}).fill('Soup');
+        await dialog.getByLabel('Votes per person').selectOption('2');
+        await dialog.getByLabel(/Anonymous votes/).check();
+        await dialog.getByLabel(/Show results while voting/).check();
+        await dialog.getByRole('button', {name: 'Create poll'}).click();
+        await expect(dialog).toHaveCount(0);
+
+        const post = page.locator('.post').filter({hasText: question}).last();
+        await expect(post).toBeVisible();
+        for (const option of ['Pizza', 'Döner', 'Salad', 'The ʺnewʺ place', 'Soup']) {
+            await expect(post.getByRole('button', {name: new RegExp(`^${option}`)})).toBeVisible();
+        }
+        await expect(post).toContainText('anonymous');
+    });
+
+    test('Also send to channel copies a thread reply into the channel, once', async ({page}) => {
+        const town = await api(page, 'GET', `/teams/name/${TEAM}/channels/name/town-square`);
+        const root = await api(page, 'POST', '/posts', {channel_id: town.id, message: `Campaign brief ${Date.now()}`});
+        await openChannel(page, 'town-square');
+        const rootEl = page.locator(`#post_${root.id}`);
+        await rootEl.hover();
+        await rootEl.locator('button[aria-label*="reply" i]').first().click();
+        await expect(page.locator('#reply_textbox')).toBeVisible();
+
+        // The checkbox sits under the text, like Slack's.
+        const toggle = composer(page, 'reply_textbox').getByRole('checkbox', {name: 'Also send to ~Town Square'});
+        await toggle.check();
+        await expect(toggle).toBeChecked();
+        const text = `Approved, ship it ${Date.now()}`;
+        await page.locator('#reply_textbox').fill(text);
+        await page.locator('#reply_textbox').press('Enter');
+        await expect(toggle).not.toBeChecked(); // off again after sending
+
+        const copy = await waitFor(async () => {
+            const posts = await api(page, 'GET', `/channels/${town.id}/posts?per_page=30`);
+            return Object.values<any>(posts.posts).find((p) => p.props?.qc_copy_of && p.message.includes(text));
+        }, 30_000);
+        const thread = await api(page, 'GET', `/posts/${root.id}/thread`);
+        const reply = Object.values<any>(thread.posts).find((p) => p.message === text);
+        expect(reply).toBeTruthy();
+        expect(copy).toMatchObject({root_id: '', user_id: reply.user_id, message: `↪ _replied to a thread:_ [${root.message}](http://localhost:8067/_redirect/pl/${reply.id}?src=channel)\n\n${text}`});
+        expect(copy.props.qc_copy_of).toBe(reply.id);
+        expect((copy.metadata?.embeds || []).filter((e: any) => e.type === 'permalink')).toEqual([]);
+
+        // A reply without the toggle stays in the thread.
+        const plain = `Thread only ${Date.now()}`;
+        await page.locator('#reply_textbox').fill(plain);
+        await page.locator('#reply_textbox').press('Enter');
+        await waitFor(async () => {
+            const t = await api(page, 'GET', `/posts/${root.id}/thread`);
+            return Object.values<any>(t.posts).find((p) => p.message === plain);
+        }, 30_000);
+        await page.waitForTimeout(3000);
+        const posts = await api(page, 'GET', `/channels/${town.id}/posts?per_page=30`);
+        expect(Object.values<any>(posts.posts).some((p) => p.props?.qc_copy_of && p.message.includes(plain))).toBe(false);
+    });
+
+    test('channel shortcuts: managers add a form button, members use it', async ({page, browser}) => {
+        const town = await api(page, 'GET', `/teams/name/${TEAM}/channels/name/town-square`);
+        await pluginApi(page, 'PUT', `/channels/${town.id}/shortcuts`, {shortcuts: []});
+        await openChannel(page, 'town-square');
+
+        // The system admin adds a shortcut from the ⊕ menu.
+        await composer(page, 'post_textbox').getByRole('button', {name: 'Create poll, todo or reminder'}).click();
+        await page.getByRole('menuitem', {name: 'Manage shortcuts…'}).click();
+        const dialog = page.getByRole('dialog').filter({hasText: 'Shortcuts for'});
+        await dialog.getByLabel('Shortcut 1 emoji').fill('📋');
+        await dialog.getByLabel('Shortcut 1 label').fill('New design request');
+        await dialog.getByLabel('Shortcut 1 link').fill('https://example.com/form?src=e2e');
+        await dialog.getByRole('button', {name: 'Save'}).click();
+        await expect(dialog).toHaveCount(0);
+
+        const chips = composer(page, 'post_textbox').getByRole('group', {name: 'Channel shortcuts'});
+        await expect(chips.getByRole('button', {name: /New design request/})).toBeVisible();
+
+        // A plain member sees the button and can use it, but can't manage shortcuts.
+        const {context, page: mPage} = await newSession(browser, 'member');
+        await openChannel(mPage, 'town-square');
+        const memberChip = composer(mPage, 'post_textbox').getByRole('group', {name: 'Channel shortcuts'}).getByRole('button', {name: /New design request/});
+        await expect(memberChip).toBeVisible();
+        const [popup] = await Promise.all([context.waitForEvent('page'), memberChip.click()]);
+        await expect.poll(() => popup.url()).toContain('https://example.com/form?src=e2e');
+        await popup.close();
+
+        await composer(mPage, 'post_textbox').getByRole('button', {name: 'Create poll, todo or reminder'}).click();
+        await expect(mPage.getByRole('menuitem', {name: /New design request/})).toBeVisible();
+        await expect(mPage.getByRole('menuitem', {name: 'Manage shortcuts…'})).toHaveCount(0);
+        await mPage.keyboard.press('Escape');
+        const denied = await pluginApi(mPage, 'PUT', `/channels/${town.id}/shortcuts`, {shortcuts: []});
+        expect(denied.message).toContain('Only channel admins');
+        await context.close();
+
+        // Thread reply boxes don't show the channel's shortcuts.
+        const root = await api(page, 'POST', '/posts', {channel_id: town.id, message: `shortcut thread ${Date.now()}`});
+        await openChannel(page, 'town-square');
+        const rootEl = page.locator(`#post_${root.id}`);
+        await rootEl.hover();
+        await rootEl.locator('button[aria-label*="reply" i]').first().click();
+        await expect(page.locator('#reply_textbox')).toBeVisible();
+        await expect(composer(page, 'reply_textbox').getByRole('group', {name: 'Channel shortcuts'})).toHaveCount(0);
+
+        await pluginApi(page, 'PUT', `/channels/${town.id}/shortcuts`, {shortcuts: []});
+    });
+
+    test('Todo for yourself lands in your Todo list', async ({page}) => {
+        await openChannel(page, 'town-square');
+        await create(page, 'post_textbox', 'Todo');
+        const title = `Review the release notes ${Date.now()}`;
+        await page.getByRole('dialog').getByLabel('Todo', {exact: true}).fill(title);
+        await page.getByRole('button', {name: 'Add todo'}).click();
+
+        await expect(page.getByText('Added to your todos')).toBeVisible();
+        expect((await todoList(page, 'my')).map((t) => t.message)).toContain(title);
+    });
+
+    test('Todo for someone else is sent to them', async ({page, browser}) => {
+        await openChannel(page, 'town-square');
+        await create(page, 'post_textbox', 'Todo');
+        const title = `Update the onboarding doc ${Date.now()}`;
+        await page.getByRole('dialog').getByLabel('Todo', {exact: true}).fill(title);
+        await page.getByRole('button', {name: 'Someone else'}).click();
+        await page.getByLabel('Person').fill('memb');
+        await page.getByRole('option', {name: /@member/}).click();
+        await page.getByRole('button', {name: 'Send todo'}).click();
+
+        await expect(page.getByText('Todo sent to @member')).toBeVisible();
+        const {context, page: mPage} = await newSession(browser, 'member');
+        expect((await todoList(mPage, 'in')).map((t) => t.message)).toContain(title);
+        await context.close();
+    });
+
+    test('Reminder dialog creates a reminder that shows in the panel and can be deleted', async ({page}) => {
+        await openChannel(page, 'town-square');
+        await create(page, 'post_textbox', 'Reminder');
+        const text = `Send the weekly report ${Date.now()}`;
+        await page.getByLabel('About').fill(text);
+        await page.getByLabel('When').selectOption('tomorrow');
+        await page.getByLabel('Repeat').selectOption('weekdays');
+        await expect(page.getByText(/Reminds you .*every weekday/)).toBeVisible();
+        await page.getByRole('button', {name: 'Create reminder'}).click();
+
+        await expect(page.getByText(/^I'll remind you /)).toBeVisible();
+        const [r] = await pluginApi<any[]>(page, 'GET', '/reminders');
+        expect(r).toMatchObject({target: 'me', message: text, repeat: 'weekdays', time_zone: 'Europe/Istanbul'});
+        expect(new Intl.DateTimeFormat('en-GB', {timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'}).format(new Date(r.at))).toBe('09:00');
+
+        await page.getByRole('button', {name: 'View', exact: true}).click();
+        const row = page.locator('.qc-item').filter({hasText: text});
+        await expect(row).toContainText('Repeats every weekday');
+        await row.getByRole('button', {name: 'Delete'}).click();
+        await row.getByRole('button', {name: 'Delete'}).click(); // confirm
+        await expect(row).toHaveCount(0);
+        expect(await pluginApi<any[]>(page, 'GET', '/reminders')).toEqual([]);
+    });
+
+    test('a personal reminder arrives as a bot DM, and Snooze sets it again', async ({page}) => {
+        const text = `Check the deploy ${Date.now()}`;
+        await pluginApi(page, 'POST', '/reminders', {target: 'me', user_id: '', channel_id: '', message: text, at: Date.now() + 35_000, repeat: '', time_zone: 'Europe/Istanbul'});
+
+        const me = await api(page, 'GET', '/users/me');
+        const bot = await api(page, 'GET', '/users/username/reminders');
+        const dm = await api(page, 'POST', '/channels/direct', [me.id, bot.id]);
+        const delivered = await waitFor(async () => {
+            const posts = await api(page, 'GET', `/channels/${dm.id}/posts?per_page=5`);
+            return Object.values<any>(posts.posts).find((p) => JSON.stringify(p.props?.attachments || '').includes(text));
+        });
+
+        await page.goto(`/${TEAM}/messages/@reminders`);
+        const card = page.locator(`#post_${delivered.id}`);
+        await expect(card).toContainText('Reminder:');
+        await card.getByRole('button', {name: 'Snooze 1 hour'}).click();
+        await expect(card).toContainText('Snoozed until');
+        await expect(card.getByRole('button', {name: 'Snooze 1 hour'})).toHaveCount(0);
+
+        const [again] = await pluginApi<any[]>(page, 'GET', '/reminders');
+        expect(again).toMatchObject({target: 'me', message: text});
+        expect(again.at).toBeGreaterThan(Date.now() + (55 * 60 * 1000));
+    });
+
+    test('a channel reminder is posted by the bot and a repeating one moves to the next day', async ({page}) => {
+        const town = await api(page, 'GET', `/teams/name/${TEAM}/channels/name/town-square`);
+        const text = `Standup in 5 minutes ${Date.now()}`;
+        const first = Date.now() + 35_000;
+        const created = await pluginApi(page, 'POST', '/reminders', {target: 'channel', user_id: '', channel_id: town.id, message: text, at: first, repeat: 'daily', time_zone: 'Europe/Istanbul'});
+
+        const posted = await waitFor(async () => {
+            const posts = await api(page, 'GET', `/channels/${town.id}/posts?per_page=20`);
+            return Object.values<any>(posts.posts).find((p) => p.message.includes(text));
+        });
+        expect(posted.message).toBe(`⏰ **Reminder from @admin:** ${text}`);
+        const bot = await api(page, 'GET', '/users/username/reminders');
+        expect(posted.user_id).toBe(bot.id);
+
+        const [r] = await pluginApi<any[]>(page, 'GET', '/reminders');
+        expect(r.id).toBe(created.id);
+        // Repeats keep the wall-clock minute (the dialog only offers whole minutes).
+        expect(r.at).toBe((Math.floor(created.at / 60_000) * 60_000) + (24 * 60 * 60 * 1000));
+    });
+});
