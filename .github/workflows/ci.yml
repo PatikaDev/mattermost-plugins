@@ -90,7 +90,7 @@ jobs:
       fail-fast: false
       matrix:
         plugin: ${{ fromJSON(needs.changes.outputs.plugins) }}
-        mattermost: ['11.7.11', '12.0.0-rc3']
+        mattermost: ['11.7.11', '12.0.0']
     defaults:
       run:
         working-directory: plugins/${{ matrix.plugin }}/e2e
