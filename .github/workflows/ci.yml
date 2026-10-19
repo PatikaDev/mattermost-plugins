@@ -1,0 +1,121 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    name: Find changed plugins
+    runs-on: ubuntu-latest
+    outputs:
+      plugins: ${{ steps.find.outputs.plugins }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: find
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || (github.event_name == 'push' && github.event.before || '') }}
+        run: .github/changed-plugins.sh "${BASE#0000000000000000000000000000000000000000}" | tee -a "$GITHUB_OUTPUT"
+
+  check:
+    name: ${{ matrix.plugin }} · lint, types, unit tests, build
+    needs: changes
+    if: needs.changes.outputs.plugins != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        plugin: ${{ fromJSON(needs.changes.outputs.plugins) }}
+    defaults:
+      run:
+        working-directory: plugins/${{ matrix.plugin }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: plugins/${{ matrix.plugin }}/.node-version
+          cache: npm
+          cache-dependency-path: plugins/${{ matrix.plugin }}/webapp/package-lock.json
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: plugins/${{ matrix.plugin }}/go.mod
+          cache-dependency-path: plugins/${{ matrix.plugin }}/go.sum
+      - id: kind
+        run: if [ -d server ]; then echo "server=true" >> "$GITHUB_OUTPUT"; else echo "server=false" >> "$GITHUB_OUTPUT"; fi
+      - name: Install
+        run: cd webapp && npm ci
+      - name: Generate manifest
+        # webapp/src/manifest.ts is generated from plugin.json (git-ignored); lint, type-check
+        # and tests import it, so create it before they run.
+        run: make apply
+      - name: Go lint
+        if: steps.kind.outputs.server == 'true'
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.9.0
+          working-directory: plugins/${{ matrix.plugin }}
+          args: ./server/...
+      - name: Go tests
+        if: steps.kind.outputs.server == 'true'
+        run: go test -race -count=1 ./server/...
+      - name: Lint
+        run: cd webapp && npm run lint
+      - name: Type-check
+        run: cd webapp && npm run check-types
+      - name: Unit tests
+        run: cd webapp && npm run test-ci
+      - name: Build
+        run: make dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plugin-${{ matrix.plugin }}
+          path: plugins/${{ matrix.plugin }}/dist/*.tar.gz
+
+  e2e:
+    # The same build must work on every supported server line: 11.x ships React 18, 12.x ships
+    # React 19. Add new lines here as Mattermost releases them.
+    name: ${{ matrix.plugin }} · E2E on Mattermost ${{ matrix.mattermost }}
+    needs: [changes, check]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        plugin: ${{ fromJSON(needs.changes.outputs.plugins) }}
+        mattermost: ['11.7.11', '12.0.0-rc3']
+    defaults:
+      run:
+        working-directory: plugins/${{ matrix.plugin }}/e2e
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: plugin-${{ matrix.plugin }}
+          path: plugins/${{ matrix.plugin }}/dist
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: plugins/${{ matrix.plugin }}/.node-version
+          cache: npm
+          cache-dependency-path: plugins/${{ matrix.plugin }}/e2e/package-lock.json
+      - name: Install Playwright
+        run: npm ci && npx playwright install --with-deps chrome chromium
+      - name: Start Mattermost ${{ matrix.mattermost }}
+        run: MM_VERSION=${{ matrix.mattermost }} ./scripts/start-server.sh
+      - name: Run E2E
+        run: npx playwright test
+      - name: Server logs on failure
+        if: failure()
+        run: docker compose logs mattermost | tail -200
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-results-${{ matrix.plugin }}-${{ matrix.mattermost }}
+          path: plugins/${{ matrix.plugin }}/e2e/test-results
