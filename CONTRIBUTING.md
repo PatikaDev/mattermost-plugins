@@ -14,7 +14,17 @@ cd e2e && npm ci && npx playwright install chrome
 MM_VERSION=11.7.11 ./scripts/start-server.sh && npx playwright test
 ```
 
-Each plugin's e2e server uses its own port, so several can run side by side. The plugin's own
+Each plugin's e2e server uses its own port, so several can run side by side.
+
+### Shared pieces
+
+- `build/` — one build toolchain for all plugins: `plugin.mk` (each plugin's `Makefile` just
+  includes it), `setup.mk`, and the `manifest` / `pluginctl` tools (their own Go module,
+  `build/go.mod`). Plugin-specific make targets can go in `plugins/<name>/build/custom.mk`.
+- `packages/webapp-config/` — the webpack and Babel configs every webapp re-exports.
+- Root `.node-version`, `.golangci.yml`, `.editorconfig`, `.gitattributes`, `LICENSE`, `NOTICE`.
+
+A change to any of these runs CI for every plugin. The plugin's own
 `CONTRIBUTING.md` lists any rules specific to it.
 
 ### Rules that apply to every plugin

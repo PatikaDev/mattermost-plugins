@@ -42,13 +42,13 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version-file: plugins/${{ matrix.plugin }}/.node-version
+          node-version-file: .node-version
           cache: npm
           cache-dependency-path: plugins/${{ matrix.plugin }}/webapp/package-lock.json
       - uses: actions/setup-go@v5
         with:
-          go-version-file: plugins/${{ matrix.plugin }}/go.mod
-          cache-dependency-path: plugins/${{ matrix.plugin }}/go.sum
+          go-version-file: build/go.mod
+          cache-dependency-path: "**/go.sum"
       - id: kind
         run: if [ -d server ]; then echo "server=true" >> "$GITHUB_OUTPUT"; else echo "server=false" >> "$GITHUB_OUTPUT"; fi
       - name: Install
@@ -102,7 +102,7 @@ jobs:
           path: plugins/${{ matrix.plugin }}/dist
       - uses: actions/setup-node@v4
         with:
-          node-version-file: plugins/${{ matrix.plugin }}/.node-version
+          node-version-file: .node-version
           cache: npm
           cache-dependency-path: plugins/${{ matrix.plugin }}/e2e/package-lock.json
       - name: Install Playwright

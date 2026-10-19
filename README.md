@@ -38,6 +38,8 @@ To upgrade, upload the newer file (`mmctl plugin add --force …`); the plugin's
 ```
 plugins/<name>/        one folder per plugin — its own manifest, server (Go, if any),
                        webapp (TypeScript/React), end-to-end tests, README and CHANGELOG
+build/                 the shared build toolchain (Makefile, manifest and pluginctl tools)
+packages/              shared configuration (webpack, Babel)
 .github/workflows/     one CI for all plugins, one release workflow
 ```
 

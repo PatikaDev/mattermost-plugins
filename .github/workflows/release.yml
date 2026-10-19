@@ -27,13 +27,13 @@ jobs:
           if [ -d "plugins/$plugin/server" ]; then echo "server=true" >> "$GITHUB_OUTPUT"; else echo "server=false" >> "$GITHUB_OUTPUT"; fi
       - uses: actions/setup-node@v4
         with:
-          node-version-file: plugins/${{ steps.tag.outputs.plugin }}/.node-version
+          node-version-file: .node-version
           cache: npm
           cache-dependency-path: plugins/${{ steps.tag.outputs.plugin }}/webapp/package-lock.json
       - uses: actions/setup-go@v5
         with:
-          go-version-file: plugins/${{ steps.tag.outputs.plugin }}/go.mod
-          cache-dependency-path: plugins/${{ steps.tag.outputs.plugin }}/go.sum
+          go-version-file: build/go.mod
+          cache-dependency-path: "**/go.sum"
       - name: Release notes from CHANGELOG.md
         # Fails early if the CHANGELOG has no section for this version.
         env:

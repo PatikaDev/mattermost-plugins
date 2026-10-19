@@ -94,7 +94,7 @@ plugin's key-value store and normal file storage). The plugin sends nothing anyw
 
 ## Development
 
-Requirements: Node 24.21.0 (see `.node-version`), Go (see `go.mod`), Docker for the
+Requirements: Node 24.21.0 (see `../../.node-version`), Go (see `go.mod`), Docker for the
 end-to-end tests.
 
 ```bash
@@ -122,6 +122,6 @@ Release.
 
 ## License
 
-[Apache License 2.0](LICENSE). Built on the
+[Apache License 2.0](../../LICENSE). Built on the
 [Mattermost plugin starter template](https://github.com/mattermost/mattermost-plugin-starter-template)
-— see [NOTICE](NOTICE). Made by [Patika](https://patika.dev).
+— see [NOTICE](../../NOTICE). Made by [Patika](https://patika.dev).
