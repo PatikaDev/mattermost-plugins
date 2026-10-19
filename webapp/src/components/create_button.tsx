@@ -5,16 +5,19 @@ import React, {useEffect, useRef, useState} from 'react';
 import ReactDOM from 'react-dom';
 
 import {BellIcon, PlusIcon, PollIcon, TodoIcon} from './icons';
+import ManageShortcutsDialog from './manage_shortcuts_dialog';
 import PollDialog from './poll_dialog';
 import ReminderDialog from './reminder_dialog';
 import TodoDialog from './todo_dialog';
+
+import {openShortcut, useShortcuts} from '../shortcuts';
 
 // What Mattermost passes to toolbar plugins (the same on 10.11, 11.x and 12.x).
 type Props = {
     draft: {channelId: string; rootId?: string};
 };
 
-type Open = 'poll' | 'todo' | 'reminder' | null;
+type Open = 'poll' | 'todo' | 'reminder' | 'shortcuts' | null;
 
 export default function CreateButton({draft}: Props) {
     const buttonRef = useRef<HTMLButtonElement>(null);
@@ -41,6 +44,7 @@ export default function CreateButton({draft}: Props) {
     }, [menuOpen]);
 
     const channelId = draft?.channelId;
+    const {shortcuts, can_manage: canManage} = useShortcuts(channelId || '');
 
     const rect = buttonRef.current?.getBoundingClientRect();
     const menuStyle: React.CSSProperties = rect ? {
@@ -75,6 +79,42 @@ export default function CreateButton({draft}: Props) {
                     role='menu'
                     style={menuStyle}
                 >
+                    {(shortcuts.length > 0 || canManage) && (
+                        <>
+                            <div className='qc-menu__title'>{'Channel shortcuts'}</div>
+                            {shortcuts.map((sc) => (
+                                <button
+                                    key={sc.id || sc.url}
+                                    type='button'
+                                    role='menuitem'
+                                    className='qc-menu__item'
+                                    onClick={() => {
+                                        setMenuOpen(false);
+                                        openShortcut(sc.url);
+                                    }}
+                                >
+                                    <span className='qc-menu__item-label'>
+                                        <span className='qc-menu__emoji'>{sc.emoji || '↗'}</span>
+                                        {sc.label}
+                                    </span>
+                                </button>
+                            ))}
+                            {canManage && (
+                                <button
+                                    type='button'
+                                    role='menuitem'
+                                    className='qc-menu__item qc-muted'
+                                    onClick={() => {
+                                        setMenuOpen(false);
+                                        setOpen('shortcuts');
+                                    }}
+                                >
+                                    <span className='qc-menu__item-label'>{'Manage shortcuts…'}</span>
+                                </button>
+                            )}
+                            <div className='qc-menu__divider'/>
+                        </>
+                    )}
                     <div className='qc-menu__title'>{'Create'}</div>
                     {items.map((item) => (
                         <button
@@ -104,6 +144,13 @@ export default function CreateButton({draft}: Props) {
                 />
             )}
             {open === 'todo' && <TodoDialog onClose={() => setOpen(null)}/>}
+            {open === 'shortcuts' && (
+                <ManageShortcutsDialog
+                    channelId={channelId}
+                    initial={shortcuts}
+                    onClose={() => setOpen(null)}
+                />
+            )}
             {open === 'reminder' && (
                 <ReminderDialog
                     channelId={channelId}

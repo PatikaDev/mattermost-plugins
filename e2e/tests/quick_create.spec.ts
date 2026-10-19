@@ -86,6 +86,53 @@ test.describe('Quick Create', () => {
         expect(Object.values<any>(posts.posts).some((p) => p.props?.qc_copy_of && p.message.includes(plain))).toBe(false);
     });
 
+    test('channel shortcuts: managers add a form button, members use it', async ({page, browser}) => {
+        const town = await api(page, 'GET', `/teams/name/${TEAM}/channels/name/town-square`);
+        await pluginApi(page, 'PUT', `/channels/${town.id}/shortcuts`, {shortcuts: []});
+        await openChannel(page, 'town-square');
+
+        // The system admin adds a shortcut from the ⊕ menu.
+        await composer(page, 'post_textbox').getByRole('button', {name: 'Create poll, todo or reminder'}).click();
+        await page.getByRole('menuitem', {name: 'Manage shortcuts…'}).click();
+        const dialog = page.getByRole('dialog').filter({hasText: 'Shortcuts for'});
+        await dialog.getByLabel('Shortcut 1 emoji').fill('📋');
+        await dialog.getByLabel('Shortcut 1 label').fill('New design request');
+        await dialog.getByLabel('Shortcut 1 link').fill('https://example.com/form?src=e2e');
+        await dialog.getByRole('button', {name: 'Save'}).click();
+        await expect(dialog).toHaveCount(0);
+
+        const chips = composer(page, 'post_textbox').getByRole('group', {name: 'Channel shortcuts'});
+        await expect(chips.getByRole('button', {name: /New design request/})).toBeVisible();
+
+        // A plain member sees the button and can use it, but can't manage shortcuts.
+        const {context, page: mPage} = await newSession(browser, 'member');
+        await openChannel(mPage, 'town-square');
+        const memberChip = composer(mPage, 'post_textbox').getByRole('group', {name: 'Channel shortcuts'}).getByRole('button', {name: /New design request/});
+        await expect(memberChip).toBeVisible();
+        const [popup] = await Promise.all([context.waitForEvent('page'), memberChip.click()]);
+        await expect.poll(() => popup.url()).toContain('https://example.com/form?src=e2e');
+        await popup.close();
+
+        await composer(mPage, 'post_textbox').getByRole('button', {name: 'Create poll, todo or reminder'}).click();
+        await expect(mPage.getByRole('menuitem', {name: /New design request/})).toBeVisible();
+        await expect(mPage.getByRole('menuitem', {name: 'Manage shortcuts…'})).toHaveCount(0);
+        await mPage.keyboard.press('Escape');
+        const denied = await pluginApi(mPage, 'PUT', `/channels/${town.id}/shortcuts`, {shortcuts: []});
+        expect(denied.message).toContain('Only channel admins');
+        await context.close();
+
+        // Thread reply boxes don't show the channel's shortcuts.
+        const root = await api(page, 'POST', '/posts', {channel_id: town.id, message: `shortcut thread ${Date.now()}`});
+        await openChannel(page, 'town-square');
+        const rootEl = page.locator(`#post_${root.id}`);
+        await rootEl.hover();
+        await rootEl.locator('button[aria-label*="reply" i]').first().click();
+        await expect(page.locator('#reply_textbox')).toBeVisible();
+        await expect(composer(page, 'reply_textbox').getByRole('group', {name: 'Channel shortcuts'})).toHaveCount(0);
+
+        await pluginApi(page, 'PUT', `/channels/${town.id}/shortcuts`, {shortcuts: []});
+    });
+
     test('Todo for yourself lands in your Todo list', async ({page}) => {
         await openChannel(page, 'town-square');
         await create(page, 'post_textbox', 'Todo');

@@ -451,3 +451,106 @@
     color: rgba(var(--center-channel-color-rgb), 0.88);
     font-weight: 600;
 }
+
+.qc-shortcuts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px 16px 2px;
+}
+
+.qc-shortcut {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    padding: 3px 10px;
+    border: 1px solid rgba(var(--center-channel-color-rgb), 0.16);
+    border-radius: 14px;
+    background: transparent;
+    color: rgba(var(--center-channel-color-rgb), 0.88);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.qc-shortcut > span:nth-child(2),
+.qc-shortcut > span:only-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.qc-shortcut:hover {
+    border-color: var(--button-bg);
+    background: rgba(var(--button-bg-rgb), 0.08);
+    color: var(--button-bg);
+}
+
+.qc-shortcut__ext {
+    color: rgba(var(--center-channel-color-rgb), 0.48);
+    font-weight: normal;
+}
+
+.qc-menu__divider {
+    height: 1px;
+    margin: 6px 0;
+    background: rgba(var(--center-channel-color-rgb), 0.16);
+}
+
+.qc-menu__emoji {
+    display: inline-flex;
+    justify-content: center;
+    width: 18px;
+}
+
+.qc-shortcut-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.qc-shortcut-row input {
+    padding: 8px;
+    border: 1px solid rgba(var(--center-channel-color-rgb), 0.16);
+    border-radius: 4px;
+    background: var(--center-channel-bg);
+    color: inherit;
+    font-size: 14px;
+}
+
+.qc-shortcut-row__emoji {
+    width: 48px;
+    text-align: center;
+}
+
+.qc-shortcut-row__fields {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.qc-shortcut-row__actions {
+    display: flex;
+    gap: 2px;
+}
+
+.qc-shortcut-row__actions button {
+    width: 28px;
+    height: 34px;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: rgba(var(--center-channel-color-rgb), 0.64);
+    cursor: pointer;
+}
+
+.qc-shortcut-row__actions button:hover:not(:disabled) {
+    background: rgba(var(--center-channel-color-rgb), 0.08);
+}
+
+.qc-shortcut-row__actions button:disabled {
+    opacity: 0.32;
+    cursor: default;
+}

@@ -4,6 +4,14 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] — 2026-10-19
+
+### Added
+- **Channel shortcuts**: up to 10 link buttons per channel (emoji, label, link), shown as chips
+  above the text of the channel's message box and at the top of the ⊕ menu. Channel admins, team
+  admins and system admins manage them from **⊕ → Manage shortcuts…** (any member in direct and
+  group messages); changes reach everyone in the channel live. Only http(s) links are accepted.
+
 ## [1.1.1] — 2026-10-15
 
 ### Fixed

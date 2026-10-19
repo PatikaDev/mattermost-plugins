@@ -13,6 +13,7 @@ import (
 	"github.com/mattermost/mattermost/server/public/plugin"
 
 	"github.com/PatikaDev/mattermost-plugin-quick-create/server/reminders"
+	"github.com/PatikaDev/mattermost-plugin-quick-create/server/shortcuts"
 )
 
 const maxBodyBytes = 64 * 1024
@@ -26,6 +27,8 @@ func (p *Plugin) initRouter() *mux.Router {
 	api.HandleFunc("/reminders", p.handleList).Methods(http.MethodGet)
 	api.HandleFunc("/reminders", p.handleCreate).Methods(http.MethodPost)
 	api.HandleFunc("/reminders/{id:[a-z0-9]{26}}", p.handleDelete).Methods(http.MethodDelete)
+	api.HandleFunc("/channels/{channel_id:[a-z0-9]{26}}/shortcuts", p.handleGetShortcuts).Methods(http.MethodGet)
+	api.HandleFunc("/channels/{channel_id:[a-z0-9]{26}}/shortcuts", p.handlePutShortcuts).Methods(http.MethodPut)
 	// Called by Mattermost when someone clicks Snooze or Done on a delivered reminder.
 	api.HandleFunc("/actions", p.handleAction).Methods(http.MethodPost)
 	return router
@@ -129,6 +132,48 @@ func (p *Plugin) handleAction(w http.ResponseWriter, r *http.Request) {
 	}
 	post.AddProp("attachments", attachments)
 	p.writeJSON(w, http.StatusOK, &model.PostActionIntegrationResponse{Update: post})
+}
+
+func (p *Plugin) handleGetShortcuts(w http.ResponseWriter, r *http.Request) {
+	list, err := p.shortcuts.Get(userID(r), mux.Vars(r)["channel_id"])
+	if err != nil {
+		p.writeShortcutsError(w, err)
+		return
+	}
+	p.writeJSON(w, http.StatusOK, list)
+}
+
+func (p *Plugin) handlePutShortcuts(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Shortcuts []shortcuts.Shortcut `json:"shortcuts"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, maxBodyBytes)).Decode(&req); err != nil {
+		p.writeShortcutsError(w, &shortcuts.UserError{Msg: "Invalid request."})
+		return
+	}
+	list, err := p.shortcuts.Replace(userID(r), mux.Vars(r)["channel_id"], req.Shortcuts)
+	if err != nil {
+		p.writeShortcutsError(w, err)
+		return
+	}
+	p.writeJSON(w, http.StatusOK, list)
+}
+
+func (p *Plugin) writeShortcutsError(w http.ResponseWriter, err error) {
+	var userErr *shortcuts.UserError
+	switch {
+	case errors.Is(err, shortcuts.ErrNotFound):
+		p.writeJSON(w, http.StatusNotFound, map[string]string{"message": err.Error()})
+	case errors.Is(err, shortcuts.ErrForbidden):
+		p.writeJSON(w, http.StatusForbidden, map[string]string{"message": err.Error()})
+	case errors.Is(err, shortcuts.ErrConflict):
+		p.writeJSON(w, http.StatusConflict, map[string]string{"message": err.Error()})
+	case errors.As(err, &userErr):
+		p.writeJSON(w, http.StatusBadRequest, map[string]string{"message": userErr.Msg})
+	default:
+		p.API.LogError("Shortcuts request failed", "error", err.Error())
+		p.writeJSON(w, http.StatusInternalServerError, map[string]string{"message": "Something went wrong. Please try again."})
+	}
 }
 
 func (p *Plugin) writeJSON(w http.ResponseWriter, status int, v any) {

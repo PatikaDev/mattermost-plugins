@@ -2,7 +2,9 @@
 
 Create **polls**, **todos** and **reminders** from a button in the message box — no slash
 commands to remember. One ⊕ button, three short dialogs. Plus a Slack-style
-[**Also send to channel**](#also-send-to-channel) checkbox for thread replies.
+[**Also send to channel**](#also-send-to-channel) checkbox for thread replies, and
+[**channel shortcuts**](#channel-shortcuts) — buttons such as "📋 New design request" right in a
+channel's message box.
 
 ![Creating from the message box](docs/images/menu.png)
 
@@ -27,6 +29,8 @@ commands to remember. One ⊕ button, three short dialogs. Plus a Slack-style
   - a **Reminders** panel (bell icon in the app bar) lists every reminder you've set, with
     **Delete**.
 - **Also send to channel** for thread replies, like Slack — see [below](#also-send-to-channel).
+- **Channel shortcuts**: up to 10 link buttons per channel, above the message box and in the ⊕ menu
+  — see [below](#channel-shortcuts).
 
 | Poll | Reminder | Todo |
 |---|---|---|
@@ -69,6 +73,31 @@ Good to know:
   it.
 - Mobile apps don't show plugin controls, so ticking the box works in the web and desktop apps;
   everyone sees the channel copy on every device.
+
+## Channel shortcuts
+
+Give a channel its own buttons in the message box — like the workflow shortcuts Slack shows in a
+channel. Typical use: a request form (design briefs, IT requests, purchase approvals) that people
+should find without hunting for a pinned post.
+
+![Shortcut buttons above the message box](docs/images/shortcuts-chips.png)
+
+- **Everyone in the channel** sees the buttons as chips just above the text of the channel's
+  message box (not in thread replies), and at the top of the ⊕ menu. Clicking one opens its link in
+  a new tab.
+- **Channel admins, team admins and system admins** add, edit, reorder or remove them with
+  **⊕ → Manage shortcuts…**: an optional emoji, a label (up to 40 characters) and a link. Up to 10
+  per channel. In direct and group messages any member can manage them.
+- Changes show up for everyone in the channel right away.
+
+![⊕ → Manage shortcuts…](docs/images/shortcuts-manage.png)
+
+To let a team lead manage their channel's shortcuts, a system admin makes them a channel admin
+(channel members list → **Make channel admin**).
+
+Links must be full `https://` (or `http://`) addresses; anything else is rejected, so a shortcut
+can't run script. Like other plugin buttons, shortcuts aren't shown in the mobile apps — keep a
+copy of an important link in the channel header for phone users.
 
 ## Requirements
 

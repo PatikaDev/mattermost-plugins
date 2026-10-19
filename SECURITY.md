@@ -17,6 +17,9 @@ for this repository instead. We aim to acknowledge reports within 5 working days
   own session; they get no extra permissions from this plugin.
 - **Also send to channel** only copies a reply into the channel it was posted in, as the same
   user, and only if that user can post there; the copy itself is never copied again.
+- **Channel shortcuts** can only be read by people who can read the channel, and only changed by
+  that channel's admins, team admins or system admins (any member of a direct or group message).
+  Only absolute http(s) links are stored and opened, with `noopener`.
 - Data stays on the Mattermost server (plugin key-value store).
 
 ## Supported versions

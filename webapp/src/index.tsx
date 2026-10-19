@@ -14,8 +14,10 @@ import AlsoSendToggle from './components/also_send_toggle';
 import CreateButton from './components/create_button';
 import {BellIcon} from './components/icons';
 import RemindersPanel from './components/reminders_panel';
+import ShortcutChips from './components/shortcut_chips';
 import Toast from './components/toast';
 import {dispatch, setStore} from './mattermost_state';
+import {shortcutStore} from './shortcuts';
 import {store as reminders} from './store';
 
 import './styles.css';
@@ -40,6 +42,9 @@ export default class Plugin {
         // The ⊕ button in every message box (channel and thread reply).
         registry.registerPostEditorActionComponent(CreateButton);
 
+        // The channel's shortcut buttons above the text (e.g. a request form).
+        registry.registerPostEditorActionComponent(ShortcutChips);
+
         // "Also send to ~channel" in thread reply boxes: the hook marks the reply, the server
         // posts the channel copy.
         registry.registerPostEditorActionComponent(AlsoSendToggle);
@@ -57,6 +62,11 @@ export default class Plugin {
         registry.registerRootComponent(() => <Toast onViewReminders={() => dispatch(showRHSPlugin)}/>);
 
         // Keep every open tab in sync when reminders are delivered, snoozed or deleted.
+        registry.registerWebSocketEventHandler(`custom_${manifest.id}_shortcuts_changed`, (msg: {data?: {channel_id?: string}}) => {
+            if (msg?.data?.channel_id) {
+                shortcutStore.load(msg.data.channel_id, true);
+            }
+        });
         registry.registerWebSocketEventHandler(`custom_${manifest.id}_reminders_changed`, () => {
             reminders.refresh();
         });

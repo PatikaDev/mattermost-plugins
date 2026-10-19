@@ -16,6 +16,7 @@ import (
 
 	"github.com/PatikaDev/mattermost-plugin-quick-create/server/broadcast"
 	"github.com/PatikaDev/mattermost-plugin-quick-create/server/reminders"
+	"github.com/PatikaDev/mattermost-plugin-quick-create/server/shortcuts"
 )
 
 // Plugin implements the interface expected by the Mattermost server to communicate between the server and plugin processes.
@@ -26,6 +27,7 @@ type Plugin struct {
 	router      *mux.Router
 	service     *reminders.Service
 	broadcaster *broadcast.Broadcaster
+	shortcuts   *shortcuts.Service
 	botID       string
 	sender      *cluster.Job
 
@@ -62,6 +64,7 @@ func (p *Plugin) OnActivate() error {
 		func(msg string, keyValuePairs ...any) { p.API.LogWarn(msg, keyValuePairs...) },
 	)
 	p.broadcaster = broadcast.New(broadcastAdapter{p: p}, func(msg string, keyValuePairs ...any) { p.API.LogWarn(msg, keyValuePairs...) })
+	p.shortcuts = shortcuts.NewService(shortcuts.NewKVStore(&p.client.KV), shortcutsAdapter{p: p})
 	p.router = p.initRouter()
 
 	// cluster.Schedule runs the job on exactly one node of a cluster at a time.

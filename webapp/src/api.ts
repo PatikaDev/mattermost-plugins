@@ -119,3 +119,9 @@ export async function searchUsers(term: string, teamId: string): Promise<UserSum
 }
 
 export const getUser = (id: string) => call<UserSummary>('GET', `/api/v4/users/${id}`);
+
+export type Shortcut = {id?: string; label: string; url: string; emoji?: string};
+export type ShortcutList = {shortcuts: Shortcut[]; can_manage: boolean};
+
+export const getShortcuts = (channelId: string) => call<ShortcutList>('GET', `${plugin}/channels/${channelId}/shortcuts`);
+export const saveShortcuts = (channelId: string, shortcuts: Shortcut[]) => call<ShortcutList>('PUT', `${plugin}/channels/${channelId}/shortcuts`, {shortcuts});
