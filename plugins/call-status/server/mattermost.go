@@ -36,7 +36,7 @@ func (a mattermostAdapter) UsersInCalls() (map[string]string, error) {
 		}
 		return nil, errors.Wrap(err, "failed to read who is in a call")
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	users := map[string]string{}
 	for rows.Next() {

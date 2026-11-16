@@ -5,6 +5,7 @@ package presence
 
 import (
 	"errors"
+	"maps"
 	"testing"
 	"time"
 
@@ -41,13 +42,7 @@ func (m *memStore) SetMeetJoin(userID string, j *MeetJoin) error {
 	return nil
 }
 
-func copyMap[T any](in map[string]T) map[string]T {
-	out := make(map[string]T, len(in))
-	for k, v := range in {
-		out[k] = v
-	}
-	return out
-}
+func copyMap[T any](in map[string]T) map[string]T { return maps.Clone(in) }
 
 type fakeMM struct {
 	calls    map[string]string
@@ -78,8 +73,7 @@ func (f *fakeMM) CanReadChannel(string, string) bool { return f.canRead }
 
 func (f *fakeMM) SetCustomStatus(userID string, cs *model.CustomStatus) error {
 	f.sets++
-	f.users[userID].SetCustomStatus(cs)
-	return nil
+	return f.users[userID].SetCustomStatus(cs)
 }
 
 func (f *fakeMM) ClearCustomStatus(userID string) error {
@@ -141,7 +135,7 @@ func TestCallSetsAndClearsStatus(t *testing.T) {
 
 func TestOwnStatusIsKept(t *testing.T) {
 	f := newFixture(t, "u1")
-	f.mm.users["u1"].SetCustomStatus(&model.CustomStatus{Emoji: "palm_tree", Text: "On vacation"})
+	require.NoError(t, f.mm.users["u1"].SetCustomStatus(&model.CustomStatus{Emoji: "palm_tree", Text: "On vacation"}))
 	f.mm.calls["u1"] = "call1"
 	f.reconcile(t)
 	assert.Equal(t, "On vacation", f.status("u1").Text)
@@ -153,7 +147,7 @@ func TestOwnStatusIsKept(t *testing.T) {
 
 func TestStatusShowsOnceOwnStatusExpires(t *testing.T) {
 	f := newFixture(t, "u1")
-	f.mm.users["u1"].SetCustomStatus(&model.CustomStatus{Emoji: "calendar", Text: "In a meeting", Duration: "date_and_time", ExpiresAt: f.clock.t.Add(time.Minute)})
+	require.NoError(t, f.mm.users["u1"].SetCustomStatus(&model.CustomStatus{Emoji: "calendar", Text: "In a meeting", Duration: "date_and_time", ExpiresAt: f.clock.t.Add(time.Minute)}))
 	f.mm.calls["u1"] = "call1"
 	f.reconcile(t)
 	assert.Equal(t, "In a meeting", f.status("u1").Text)
@@ -184,7 +178,7 @@ func TestChangedDuringCallIsKeptAfterCall(t *testing.T) {
 	f.mm.calls["u1"] = "call1"
 	f.reconcile(t)
 
-	f.mm.users["u1"].SetCustomStatus(&model.CustomStatus{Emoji: "pizza", Text: "Lunch"})
+	require.NoError(t, f.mm.users["u1"].SetCustomStatus(&model.CustomStatus{Emoji: "pizza", Text: "Lunch"}))
 	f.reconcile(t)
 	delete(f.mm.calls, "u1")
 	f.reconcile(t)
@@ -277,7 +271,7 @@ func TestClearAll(t *testing.T) {
 	f.mm.calls["u1"] = "call1"
 	f.mm.calls["u2"] = "call1"
 	f.reconcile(t)
-	f.mm.users["u2"].SetCustomStatus(&model.CustomStatus{Emoji: "pizza", Text: "Lunch"})
+	require.NoError(t, f.mm.users["u2"].SetCustomStatus(&model.CustomStatus{Emoji: "pizza", Text: "Lunch"}))
 
 	f.svc.ClearAll()
 	assert.Nil(t, f.status("u1"))
