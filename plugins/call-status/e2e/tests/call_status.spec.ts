@@ -15,7 +15,7 @@ function ensureCallTables() {
     sql(`CREATE TABLE IF NOT EXISTS calls (ID varchar(26) PRIMARY KEY, ChannelID varchar(26), StartAt bigint, EndAt bigint, CreateAt bigint,
         DeleteAt bigint, Title varchar(256), PostID varchar(26), ThreadID varchar(26), OwnerID varchar(26), Participants jsonb, Stats jsonb, Props jsonb)`);
     sql(`CREATE TABLE IF NOT EXISTS calls_sessions (ID varchar(26) PRIMARY KEY, CallID varchar(26), UserID varchar(26), JoinAt bigint,
-        Unmuted boolean, RaisedHand bigint, Video boolean)`);
+        Unmuted boolean, RaisedHand bigint)`);
 }
 
 const newId = () => Array.from({length: 26}, () => 'abcdefghijklmnopqrstuvwxyz0123456789'[Math.floor(Math.random() * 36)]).join('');
@@ -23,12 +23,25 @@ const newId = () => Array.from({length: 26}, () => 'abcdefghijklmnopqrstuvwxyz01
 function startCall(userId: string): string {
     const callId = newId();
     const now = Date.now();
-    sql(`INSERT INTO calls VALUES ('${callId}', '${newId()}', ${now}, 0, ${now}, 0, '', '', '', '${userId}', '[]', '{}', '{}')`);
-    sql(`INSERT INTO calls_sessions VALUES ('${newId()}', '${callId}', '${userId}', ${now}, false, 0, false)`);
+    // Column lists, not VALUES order: older Calls versions have fewer columns (no "video").
+    sql(`INSERT INTO calls (ID, ChannelID, StartAt, EndAt, CreateAt, DeleteAt, Title, PostID, ThreadID, OwnerID, Participants, Stats, Props)
+        VALUES ('${callId}', '${newId()}', ${now}, 0, ${now}, 0, '', '', '', '${userId}', '[]', '{}', '{}')`);
+    sql(`INSERT INTO calls_sessions (ID, CallID, UserID, JoinAt, Unmuted, RaisedHand) VALUES ('${newId()}', '${callId}', '${userId}', ${now}, false, 0)`);
     return callId;
 }
 
 const endCall = (callId: string) => sql(`UPDATE calls SET EndAt = ${Date.now()} WHERE ID = '${callId}'`);
+
+// Ends every fake call, so a failed test can't leave someone "in a call" for the next one.
+const endAllCalls = () => sql(`UPDATE calls SET EndAt = ${Date.now()} WHERE EndAt = 0`);
+
+async function postAs(page: Page, message: string, extra: Record<string, unknown> = {}) {
+    const team = await api(page, 'GET', `/teams/name/${TEAM}`);
+    const channel = await api(page, 'GET', `/teams/${team.id}/channels/name/town-square`);
+    const post = await api(page, 'POST', '/posts', {channel_id: channel.id, message, ...extra});
+    expect(post.id).toBeTruthy();
+    return post as {id: string};
+}
 
 type CustomStatus = {emoji?: string; text?: string};
 
@@ -57,15 +70,17 @@ async function clickAndCloseTab(page: Page, link: ReturnType<Page['locator']>) {
 
 test.describe('Call status', () => {
     test.beforeAll(() => ensureCallTables());
+    test.afterEach(() => endAllCalls());
 
     test('in a call shows 🎧 next to the name for others, and goes away after', async ({browser}) => {
         const admin = await newSession(browser, 'admin');
         const member = await newSession(browser, 'member');
         await setOwnStatus(member.page, null);
 
-        await openChannel(member.page, 'town-square');
-        await member.page.locator('#post_textbox').fill('Hi from the member');
-        await member.page.keyboard.press('Enter');
+        // Someone else posts first: Mattermost hides the name (and its status emoji) on
+        // back-to-back posts by the same person.
+        await postAs(admin.page, 'Hi from the admin');
+        const memberPost = await postAs(member.page, 'Hi from the member');
 
         const callId = startCall(member.me.id);
         await waitForStatus(admin.page, member.me.id, 'In a call');
@@ -73,8 +88,10 @@ test.describe('Call status', () => {
 
         // What others see: the emoji next to the member's name on their post.
         await openChannel(admin.page, 'town-square');
-        const post = admin.page.locator('[id^="post_"]').filter({hasText: 'Hi from the member'}).last();
-        await expect(post.locator('[data-emoticon="headphones"], [aria-label*="headphones"]').first()).toBeVisible({timeout: 20_000});
+        const post = admin.page.locator(`#post_${memberPost.id}`);
+        await expect(post).toBeVisible();
+        const emoji = post.locator('[data-emoticon="headphones"]').first();
+        await expect(emoji, `status emoji next to the name; post HTML: ${(await post.innerHTML()).slice(0, 1500)}`).toBeVisible({timeout: 20_000});
 
         endCall(callId);
         await waitForStatus(admin.page, member.me.id, null);
@@ -118,15 +135,10 @@ test.describe('Call status', () => {
         await setOwnStatus(member.page, null);
 
         // A meeting message as the Google Meet plugin posts it, by whoever started the meeting.
-        const team = await api(admin.page, 'GET', `/teams/name/${TEAM}`);
-        const channel = await api(admin.page, 'GET', `/teams/${team.id}/channels/name/town-square`);
-        const meet = await api(admin.page, 'POST', '/posts', {
-            channel_id: channel.id,
+        const meet = await postAs(admin.page, 'I have started a meeting: https://meet.google.com/abc-defg-hij', {
             type: 'custom_google_meet',
-            message: 'I have started a meeting: https://meet.google.com/abc-defg-hij',
             props: {meeting_link: 'https://meet.google.com/abc-defg-hij', meeting_topic: ''},
         });
-        expect(meet.id).toBeTruthy();
         await waitForStatus(admin.page, admin.me.id, 'In a Google Meet');
 
         // The member clicks the meeting link in the message.
@@ -148,11 +160,10 @@ test.describe('Call status', () => {
     test('a click on a Meet link in an ordinary message changes nothing', async ({browser}) => {
         const member = await newSession(browser, 'member');
         await setOwnStatus(member.page, null);
+        const post = await postAs(member.page, 'Our meeting: https://meet.google.com/xyz-abcd-efg');
         await openChannel(member.page, 'town-square');
-        await member.page.locator('#post_textbox').fill('Our meeting: https://meet.google.com/xyz-abcd-efg');
-        await member.page.keyboard.press('Enter');
 
-        const link = member.page.locator('[id^="post_"] a[href="https://meet.google.com/xyz-abcd-efg"]').last();
+        const link = member.page.locator(`#post_${post.id} a[href*="meet.google.com/xyz-abcd-efg"]`).first();
         await expect(link).toBeVisible();
         await clickAndCloseTab(member.page, link);
         await member.page.waitForTimeout(12_000);
