@@ -10,6 +10,7 @@ used by [Patika](https://patika.dev) on Mattermost Team Edition, and free for an
 | [**Screen Recorder**](plugins/screen-recorder) | Record your screen (and optional microphone narration) and post it as a video, in the web and desktop apps. | [screen-recorder](https://github.com/PatikaDev/mattermost-plugins/releases?q=screen-recorder&expanded=true) |
 | [**Reaction Notifications**](plugins/reaction-notifications) | A grouped DM when someone reacts to your message — Mattermost doesn't notify on reactions by itself. | [reaction-notifications](https://github.com/PatikaDev/mattermost-plugins/releases?q=reaction-notifications&expanded=true) |
 | [**All Unreads**](plugins/all-unreads) | One panel with every unread message across your channels, with **Mark all as read** — like Slack's All Unreads. | [all-unreads](https://github.com/PatikaDev/mattermost-plugins/releases?q=all-unreads&expanded=true) |
+| [**Call Status**](plugins/call-status) | **🎧 In a call** / **📹 In a Google Meet** next to people's names while they're in a Mattermost call or a Google Meet — like Slack's huddle indicator, on web, desktop and mobile. | [call-status](https://github.com/PatikaDev/mattermost-plugins/releases?q=call-status&expanded=true) |
 
 Every plugin:
 
