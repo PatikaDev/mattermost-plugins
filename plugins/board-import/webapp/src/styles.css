@@ -1,0 +1,170 @@
+/* Board Import — uses Mattermost's theme variables, which the Boards view shares. */
+
+.bi-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.bi-dialog {
+    display: flex;
+    flex-direction: column;
+    width: min(760px, calc(100vw - 32px));
+    max-height: calc(100vh - 48px);
+    padding: 24px;
+    border-radius: 8px;
+    background: var(--center-channel-bg);
+    color: var(--center-channel-color);
+    box-shadow: 0 20px 32px rgba(0, 0, 0, 0.12);
+    font-size: 14px;
+}
+
+.bi-dialog h2 {
+    margin: 0 0 4px;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.bi-sub {
+    margin: 0 0 16px;
+    color: rgba(var(--center-channel-color-rgb), 0.72);
+}
+
+.bi-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.bi-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    font-weight: normal;
+}
+
+.bi-field__label,
+.bi-section {
+    font-weight: 600;
+}
+
+.bi-dialog select,
+.bi-dialog input[type='file'] {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid rgba(var(--center-channel-color-rgb), 0.16);
+    border-radius: 4px;
+    background: var(--center-channel-bg);
+    color: inherit;
+    color-scheme: light dark;
+    font-size: 14px;
+}
+
+.bi-hint {
+    margin: 0;
+    color: rgba(var(--center-channel-color-rgb), 0.64);
+    font-size: 12px;
+}
+
+.bi-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.bi-table th,
+.bi-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid rgba(var(--center-channel-color-rgb), 0.08);
+    text-align: left;
+    vertical-align: middle;
+}
+
+.bi-table th {
+    color: rgba(var(--center-channel-color-rgb), 0.64);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.bi-preview {
+    overflow-x: auto;
+}
+
+.bi-preview td {
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bi-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-weight: normal;
+}
+
+.bi-warnings {
+    margin: 0;
+    padding: 8px 12px 8px 28px;
+    border-radius: 4px;
+    background: rgba(var(--away-indicator-rgb), 0.12);
+    font-size: 13px;
+}
+
+.bi-error {
+    margin: 12px 0 0;
+    color: var(--error-text);
+}
+
+.bi-progress {
+    height: 6px;
+    overflow: hidden;
+    border-radius: 3px;
+    background: rgba(var(--center-channel-color-rgb), 0.08);
+}
+
+.bi-progress > div {
+    height: 100%;
+    background: var(--button-bg);
+    transition: width 0.2s;
+}
+
+.bi-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+/* The Import button in the Boards toolbar, next to its New button. */
+.bi-toolbar-host {
+    display: flex;
+    align-items: center;
+    margin-right: 8px;
+}
+
+.bi-toolbar-button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid rgba(var(--button-bg-rgb), 0.32);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--button-bg);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.bi-toolbar-button:hover {
+    background: rgba(var(--button-bg-rgb), 0.08);
+}

@@ -1,0 +1,17 @@
+{
+    "id": "dev.patika.board-import",
+    "name": "Board Import",
+    "description": "Import cards into a Boards board from an Excel (.xlsx) or CSV file — statuses, people, dates and all. A board's own CSV export imports back as it is.",
+    "homepage_url": "https://github.com/PatikaDev/mattermost-plugins/tree/main/plugins/board-import",
+    "support_url": "https://github.com/PatikaDev/mattermost-plugins/issues",
+    "icon_path": "assets/board-import-icon.svg",
+    "min_server_version": "10.11.0",
+    "webapp": {
+        "bundle_path": "webapp/dist/main.js"
+    },
+    "settings_schema": {
+        "header": "",
+        "footer": "",
+        "settings": []
+    }
+}

@@ -11,6 +11,7 @@ used by [Patika](https://patika.dev) on Mattermost Team Edition, and free for an
 | [**Reaction Notifications**](plugins/reaction-notifications) | A grouped DM when someone reacts to your message — Mattermost doesn't notify on reactions by itself. | [reaction-notifications](https://github.com/PatikaDev/mattermost-plugins/releases?q=reaction-notifications&expanded=true) |
 | [**All Unreads**](plugins/all-unreads) | One panel with every unread message across your channels, with **Mark all as read** — like Slack's All Unreads. | [all-unreads](https://github.com/PatikaDev/mattermost-plugins/releases?q=all-unreads&expanded=true) |
 | [**Call Status**](plugins/call-status) | **🎧 In a call** / **📹 In a Google Meet** next to people's names while they're in a Mattermost call or a Google Meet — like Slack's huddle indicator, on web, desktop and mobile. | [call-status](https://github.com/PatikaDev/mattermost-plugins/releases?q=call-status&expanded=true) |
+| [**Board Import**](plugins/board-import) | Import cards into a Boards board from an **Excel (.xlsx) or CSV** file — statuses, people and dates included; a board's own CSV export imports back as it is. | [board-import](https://github.com/PatikaDev/mattermost-plugins/releases?q=board-import&expanded=true) |
 
 Every plugin:
 
