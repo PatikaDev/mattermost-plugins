@@ -51,7 +51,7 @@ export default class Plugin {
         registry.registerPostEditorActionComponent(AlsoSendToggle);
         registry.registerMessageWillBePostedHook(async (post) => markPost(post));
 
-        // …and in the ••• menu of a reply that is already posted, like Slack's.
+        // …and in the Message actions menu (⊞) of a reply that is already posted, like Slack's.
         registry.registerPostDropdownMenuAction(
             'Also send to channel',
             (postId) => sendReplyToChannel(postId),

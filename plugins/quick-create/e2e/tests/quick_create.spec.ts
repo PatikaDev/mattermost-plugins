@@ -86,7 +86,7 @@ test.describe('Quick Create', () => {
         expect(Object.values<any>(posts.posts).some((p) => p.props?.qc_copy_of && p.message.includes(plain))).toBe(false);
     });
 
-    test('Also send to channel from the menu of a reply that is already posted', async ({page, browser}) => {
+    test('Also send to channel from the Message actions menu of a reply that is already posted', async ({page, browser}) => {
         const town = await api(page, 'GET', `/teams/name/${TEAM}/channels/name/town-square`);
         const root = await api(page, 'POST', '/posts', {channel_id: town.id, message: `Launch checklist ${Date.now()}`});
         const text = `Design is final ${Date.now()}`;
@@ -99,7 +99,8 @@ test.describe('Quick Create', () => {
         const openMenu = async () => {
             const replyEl = page.locator(`#rhsPost_${reply.id}`);
             await replyEl.hover();
-            await replyEl.locator(`button[id$="_button_${reply.id}"]`).click();
+            // Mattermost lists plugin items under "Message actions" (⊞), not under •••.
+            await replyEl.locator(`button[aria-label="actions"][id$="_actions_button_${reply.id}"]`).click();
             return page.getByRole('menu');
         };
         const menu = await openMenu();
@@ -114,7 +115,7 @@ test.describe('Quick Create', () => {
 
         // Once is enough: the item is gone, and the server refuses a repeat.
         const again = await openMenu();
-        await expect(again.getByRole('menuitem', {name: 'Mark as Unread'})).toBeVisible();
+        await expect(again.getByRole('menuitem', {name: 'Add Todo'})).toBeVisible(); // the Todo plugin's item
         await expect(again.getByRole('menuitem', {name: 'Also send to channel'})).toHaveCount(0);
         await page.keyboard.press('Escape');
         const repeat = await page.evaluate(async (id) => {
