@@ -12,6 +12,7 @@ import (
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/plugin"
 
+	"github.com/PatikaDev/mattermost-plugins/plugins/quick-create/server/broadcast"
 	"github.com/PatikaDev/mattermost-plugins/plugins/quick-create/server/reminders"
 	"github.com/PatikaDev/mattermost-plugins/plugins/quick-create/server/shortcuts"
 )
@@ -29,6 +30,8 @@ func (p *Plugin) initRouter() *mux.Router {
 	api.HandleFunc("/reminders/{id:[a-z0-9]{26}}", p.handleDelete).Methods(http.MethodDelete)
 	api.HandleFunc("/channels/{channel_id:[a-z0-9]{26}}/shortcuts", p.handleGetShortcuts).Methods(http.MethodGet)
 	api.HandleFunc("/channels/{channel_id:[a-z0-9]{26}}/shortcuts", p.handlePutShortcuts).Methods(http.MethodPut)
+	// "Also send to channel" from the menu of a reply that has already been posted.
+	api.HandleFunc("/posts/{post_id:[a-z0-9]{26}}/send-to-channel", p.handleSendToChannel).Methods(http.MethodPost)
 	// Called by Mattermost when someone clicks Snooze or Done on a delivered reminder.
 	api.HandleFunc("/actions", p.handleAction).Methods(http.MethodPost)
 	return router
@@ -132,6 +135,29 @@ func (p *Plugin) handleAction(w http.ResponseWriter, r *http.Request) {
 	}
 	post.AddProp("attachments", attachments)
 	p.writeJSON(w, http.StatusOK, &model.PostActionIntegrationResponse{Update: post})
+}
+
+func (p *Plugin) handleSendToChannel(w http.ResponseWriter, r *http.Request) {
+	err := p.broadcaster.SendExisting(userID(r), mux.Vars(r)["post_id"])
+	var status int
+	var message string
+	switch {
+	case err == nil:
+		w.WriteHeader(http.StatusNoContent)
+		return
+	case errors.Is(err, broadcast.ErrNotFound):
+		status, message = http.StatusNotFound, "That reply or its thread is no longer there."
+	case errors.Is(err, broadcast.ErrNotYours):
+		status, message = http.StatusForbidden, "You can only send your own thread replies to the channel."
+	case errors.Is(err, broadcast.ErrNoPermission):
+		status, message = http.StatusForbidden, "You can't post in this channel."
+	case errors.Is(err, broadcast.ErrAlreadySent):
+		status, message = http.StatusConflict, "This reply is already in the channel."
+	default:
+		p.API.LogError("Send to channel failed", "error", err.Error())
+		status, message = http.StatusInternalServerError, "Something went wrong. Please try again."
+	}
+	p.writeJSON(w, status, map[string]string{"message": message})
 }
 
 func (p *Plugin) handleGetShortcuts(w http.ResponseWriter, r *http.Request) {

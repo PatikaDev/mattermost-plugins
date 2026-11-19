@@ -9,14 +9,15 @@ import type {GlobalState} from '@mattermost/types/store';
 
 import type {PluginRegistry} from 'types/mattermost-webapp';
 
-import {markPost} from './broadcast';
+import {sendToChannel} from './api';
+import {canSendToChannel, markPost, markSentFromMenu} from './broadcast';
 import AlsoSendToggle from './components/also_send_toggle';
 import CreateButton from './components/create_button';
 import {BellIcon} from './components/icons';
 import RemindersPanel from './components/reminders_panel';
 import ShortcutChips from './components/shortcut_chips';
 import Toast from './components/toast';
-import {dispatch, setStore} from './mattermost_state';
+import {channelLabel, currentUserId, dispatch, getPost, setStore} from './mattermost_state';
 import {shortcutStore} from './shortcuts';
 import {store as reminders} from './store';
 
@@ -50,6 +51,13 @@ export default class Plugin {
         registry.registerPostEditorActionComponent(AlsoSendToggle);
         registry.registerMessageWillBePostedHook(async (post) => markPost(post));
 
+        // …and in the ••• menu of a reply that is already posted, like Slack's.
+        registry.registerPostDropdownMenuAction(
+            'Also send to channel',
+            (postId) => sendReplyToChannel(postId),
+            (postId) => canSendToChannel(getPost(postId), currentUserId()),
+        );
+
         // The "Reminders" panel, opened from the app bar / channel header.
         const {showRHSPlugin, toggleRHSPlugin} = registry.registerRightHandSidebarComponent(RemindersPanel, 'Reminders');
         registry.registerChannelHeaderButtonAction(
@@ -70,6 +78,17 @@ export default class Plugin {
         registry.registerWebSocketEventHandler(`custom_${manifest.id}_reminders_changed`, () => {
             reminders.refresh();
         });
+    }
+}
+
+async function sendReplyToChannel(postId: string) {
+    const channelId = getPost(postId)?.channel_id || '';
+    try {
+        await sendToChannel(postId);
+        markSentFromMenu(postId);
+        reminders.showToast({text: `Sent to ${channelLabel(channelId)}`});
+    } catch (err) {
+        reminders.showToast({text: err instanceof Error ? err.message : 'Something went wrong. Please try again.'});
     }
 }
 

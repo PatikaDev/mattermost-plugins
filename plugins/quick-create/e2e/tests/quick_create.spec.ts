@@ -86,6 +86,57 @@ test.describe('Quick Create', () => {
         expect(Object.values<any>(posts.posts).some((p) => p.props?.qc_copy_of && p.message.includes(plain))).toBe(false);
     });
 
+    test('Also send to channel from the menu of a reply that is already posted', async ({page, browser}) => {
+        const town = await api(page, 'GET', `/teams/name/${TEAM}/channels/name/town-square`);
+        const root = await api(page, 'POST', '/posts', {channel_id: town.id, message: `Launch checklist ${Date.now()}`});
+        const text = `Design is final ${Date.now()}`;
+        const reply = await api(page, 'POST', '/posts', {channel_id: town.id, root_id: root.id, message: text});
+        await openChannel(page, 'town-square');
+        const rootEl = page.locator(`#post_${root.id}`);
+        await rootEl.hover();
+        await rootEl.locator('button[aria-label*="reply" i]').first().click();
+
+        const openMenu = async () => {
+            const replyEl = page.locator(`#rhsPost_${reply.id}`);
+            await replyEl.hover();
+            await replyEl.locator(`button[id$="_button_${reply.id}"]`).click();
+            return page.getByRole('menu');
+        };
+        const menu = await openMenu();
+        await menu.getByRole('menuitem', {name: 'Also send to channel'}).click();
+        await expect(page.getByRole('status').filter({hasText: 'Sent to ~Town Square'})).toBeVisible();
+
+        const copy = await waitFor(async () => {
+            const posts = await api(page, 'GET', `/channels/${town.id}/posts?per_page=30`);
+            return Object.values<any>(posts.posts).find((p) => p.props?.qc_copy_of === reply.id);
+        }, 30_000);
+        expect(copy).toMatchObject({root_id: '', user_id: reply.user_id, message: `↪ _replied to a thread:_ [${root.message}](http://localhost:8067/_redirect/pl/${reply.id}?src=channel)\n\n${text}`});
+
+        // Once is enough: the item is gone, and the server refuses a repeat.
+        const again = await openMenu();
+        await expect(again.getByRole('menuitem', {name: 'Mark as Unread'})).toBeVisible();
+        await expect(again.getByRole('menuitem', {name: 'Also send to channel'})).toHaveCount(0);
+        await page.keyboard.press('Escape');
+        const repeat = await page.evaluate(async (id) => {
+            const csrf = document.cookie.split('; ').find((c) => c.startsWith('MMCSRF='))?.split('=')[1] || '';
+            const res = await fetch(`/plugins/dev.patika.quick-create/api/v1/posts/${id}/send-to-channel`, {method: 'POST', headers: {'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-Token': csrf}});
+            return res.status;
+        }, reply.id);
+        expect(repeat).toBe(409);
+
+        // Someone else can't send my reply, and isn't offered to.
+        const member = await newSession(browser, 'member');
+        const status = await member.page.evaluate(async (id) => {
+            const csrf = document.cookie.split('; ').find((c) => c.startsWith('MMCSRF='))?.split('=')[1] || '';
+            const res = await fetch(`/plugins/dev.patika.quick-create/api/v1/posts/${id}/send-to-channel`, {method: 'POST', headers: {'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-Token': csrf}});
+            return res.status;
+        }, reply.id);
+        expect(status).toBe(403);
+        await member.context.close();
+        const copies = await api(page, 'GET', `/channels/${town.id}/posts?per_page=30`);
+        expect(Object.values<any>(copies.posts).filter((p) => p.props?.qc_copy_of === reply.id)).toHaveLength(1);
+    });
+
     test('channel shortcuts: managers add a form button, members use it', async ({page, browser}) => {
         const town = await api(page, 'GET', `/teams/name/${TEAM}/channels/name/town-square`);
         await pluginApi(page, 'PUT', `/channels/${town.id}/shortcuts`, {shortcuts: []});

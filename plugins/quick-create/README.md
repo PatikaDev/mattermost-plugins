@@ -65,6 +65,10 @@ The channel copy reads:
 **3. The box unticks itself** after sending, so the next reply stays in the thread unless you
 tick it again.
 
+**Forgot to tick it?** Open the ••• menu of your reply and choose **Also send to channel**. The
+channel gets the same copy as with the checkbox. The item is shown on your own thread replies
+only, and disappears once the reply is in the channel.
+
 Good to know:
 
 - The checkbox lives with Mattermost's formatting toolbar (the only place plugins can add to the
@@ -146,7 +150,8 @@ The webapp adds the button, the dialogs and the panel. **Poll** turns the dialog
 Matterpoll's `/poll "Question" "Option 1" "Option 2" … --settings` command and runs it for you
 (Matterpoll's own dialog is limited to three options; its command is not). **Also send to channel**
 marks the reply when you send it (a `MessageWillBePosted` hook); the server sees the mark
-(`MessageHasBeenPosted`) and posts the channel copy as you, with copied attachments. **Todo** calls the Todo plugin's own
+(`MessageHasBeenPosted`) and posts the channel copy as you, with copied attachments; the reply's
+••• menu asks the server to do the same for a reply that's already posted. **Todo** calls the Todo plugin's own
 API. **Reminders** are stored in this plugin's key-value store; a cluster-safe job delivers due
 reminders once a minute, claiming each one with a compare-and-set so it is delivered once even
 with several app servers.

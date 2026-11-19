@@ -83,6 +83,8 @@ async function call<T>(method: string, url: string, body?: unknown): Promise<T> 
 
 const plugin = `/plugins/${manifest.id}/api/v1`;
 
+export const sendToChannel = (postId: string) => call<void>('POST', `${plugin}/posts/${postId}/send-to-channel`);
+
 export const listReminders = () => call<Reminder[]>('GET', `${plugin}/reminders`);
 export const createReminder = (req: CreateReminderRequest) => call<Reminder>('POST', `${plugin}/reminders`, req);
 export const deleteReminder = (id: string) => call<void>('DELETE', `${plugin}/reminders/${id}`);

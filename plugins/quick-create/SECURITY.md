@@ -16,7 +16,8 @@ for this repository instead. We aim to acknowledge reports within 5 working days
 - **Poll** and **Todo** use Matterpoll's slash command and the Todo plugin's API with the user's
   own session; they get no extra permissions from this plugin.
 - **Also send to channel** only copies a reply into the channel it was posted in, as the same
-  user, and only if that user can post there; the copy itself is never copied again.
+  user, and only if that user can post there; the copy itself is never copied again. From the
+  ••• menu, only the reply's author can send it, and each reply is sent at most once.
 - **Channel shortcuts** can only be read by people who can read the channel, and only changed by
   that channel's admins, team admins or system admins (any member of a direct or group message).
   Only absolute http(s) links are stored and opened, with `noopener`.

@@ -5,6 +5,7 @@ package main
 
 import (
 	"github.com/mattermost/mattermost/server/public/model"
+	"github.com/mattermost/mattermost/server/public/pluginapi"
 	"github.com/pkg/errors"
 )
 
@@ -80,6 +81,17 @@ func (a broadcastAdapter) CopyFileInfos(userID string, fileIDs []string) ([]stri
 // CreatePost posts as post.UserId (the reply's author).
 func (a broadcastAdapter) CreatePost(post *model.Post) error {
 	return a.p.client.Post.CreatePost(post)
+}
+
+// broadcastSentPrefix keys one KV entry per reply that has been sent to its channel.
+const broadcastSentPrefix = "bc_sent_"
+
+func (a broadcastAdapter) MarkSent(replyID string) (bool, error) {
+	return a.p.client.KV.Set(broadcastSentPrefix+replyID, true, pluginapi.SetAtomic(nil))
+}
+
+func (a broadcastAdapter) UnmarkSent(replyID string) error {
+	return a.p.client.KV.Delete(broadcastSentPrefix + replyID)
 }
 
 func (a broadcastAdapter) SiteURL() string {

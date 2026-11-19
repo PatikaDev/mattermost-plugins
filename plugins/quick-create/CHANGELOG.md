@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Also send to channel** in the ••• menu of a thread reply you've already posted, like Slack's:
+  it sends the reply to the channel the same way the checkbox does. It's offered only on your own
+  replies, and only once per reply.
+
 ## [1.2.0] — 2026-10-19
 
 ### Added

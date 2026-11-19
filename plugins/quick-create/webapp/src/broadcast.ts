@@ -57,3 +57,36 @@ export function useAlsoSend(rootId: string): boolean {
     }, [rootId]);
     return on;
 }
+
+// "Also send to channel" in the menu of a reply that is already posted: only for your own live
+// thread replies that haven't gone to the channel yet (with the checkbox, or from this menu in
+// this tab — the server refuses any other repeat).
+export type MenuPost = {
+    id: string;
+    root_id?: string;
+    user_id?: string;
+    type?: string;
+    delete_at?: number;
+    pending_post_id?: string;
+    props?: Record<string, unknown>;
+};
+
+const sentFromMenu = new Set<string>();
+
+export function canSendToChannel(post: MenuPost | undefined, me: string): boolean {
+    return Boolean(
+        post &&
+        me &&
+        post.root_id &&
+        post.user_id === me &&
+        !post.type && // system messages
+        !post.delete_at &&
+        post.pending_post_id !== post.id && // still being sent
+        post.props?.[PROP_REQUESTED] !== true &&
+        !sentFromMenu.has(post.id),
+    );
+}
+
+export function markSentFromMenu(postId: string) {
+    sentFromMenu.add(postId);
+}

@@ -14,11 +14,13 @@ import (
 )
 
 type fakeMM struct {
-	posts    map[string]*model.Post
-	canPost  bool
-	created  []*model.Post
-	copyErr  error
-	copiedOf []string
+	posts     map[string]*model.Post
+	canPost   bool
+	created   []*model.Post
+	copyErr   error
+	copiedOf  []string
+	sent      map[string]bool
+	createErr error
 }
 
 func newFake() *fakeMM {
@@ -27,6 +29,7 @@ func newFake() *fakeMM {
 			"root": {Id: "root", UserId: "bob", ChannelId: "town", Message: "Campaign brief for the autumn launch is ready"},
 		},
 		canPost: true,
+		sent:    map[string]bool{},
 	}
 }
 
@@ -52,7 +55,23 @@ func (f *fakeMM) CopyFileInfos(_ string, ids []string) ([]string, error) {
 }
 
 func (f *fakeMM) CreatePost(p *model.Post) error {
+	if f.createErr != nil {
+		return f.createErr
+	}
 	f.created = append(f.created, p)
+	return nil
+}
+
+func (f *fakeMM) MarkSent(id string) (bool, error) {
+	if f.sent[id] {
+		return false, nil
+	}
+	f.sent[id] = true
+	return true, nil
+}
+
+func (f *fakeMM) UnmarkSent(id string) error {
+	delete(f.sent, id)
 	return nil
 }
 
@@ -134,4 +153,61 @@ func TestLongOrBracketedThreadTextIsShortenedSafely(t *testing.T) {
 	header := strings.SplitN(mm.created[0].Message, "\n", 2)[0]
 	assert.Contains(t, header, "[(Draft) word")
 	assert.Contains(t, header, "…](https://team.example.com/_redirect/pl/reply?src=channel)")
+}
+
+func TestAuthorCanSendAnEarlierReplyFromItsMenu(t *testing.T) {
+	mm := newFake()
+	r := reply("Approved, ship it 🚀", false)
+	mm.posts["reply"] = r
+	b := New(mm, func(string, ...any) {})
+	require.NoError(t, b.SendExisting("alice", "reply"))
+	require.Len(t, mm.created, 1)
+	assert.Equal(t, "alice", mm.created[0].UserId)
+	assert.Empty(t, mm.created[0].RootId)
+	assert.Equal(t, "↪ _replied to a thread:_ [Campaign brief for the autumn launch is ready](https://team.example.com/_redirect/pl/reply?src=channel)\n\nApproved, ship it 🚀", mm.created[0].Message)
+	assert.Equal(t, "reply", mm.created[0].GetProp(PropCopyOf))
+
+	assert.ErrorIs(t, b.SendExisting("alice", "reply"), ErrAlreadySent, "a second click sends nothing")
+	assert.Len(t, mm.created, 1)
+}
+
+func TestOnlyTheAuthorsOwnLiveRepliesCanBeSent(t *testing.T) {
+	mm := newFake()
+	mm.posts["reply"] = reply("x", false)
+	b := New(mm, func(string, ...any) {})
+	assert.ErrorIs(t, b.SendExisting("mallory", "reply"), ErrNotYours)
+	assert.ErrorIs(t, b.SendExisting("bob", "root"), ErrNotFound, "a thread's first message is already in the channel")
+	assert.ErrorIs(t, b.SendExisting("alice", "missing"), ErrNotFound)
+	mm.posts["reply"].DeleteAt = 1
+	assert.ErrorIs(t, b.SendExisting("alice", "reply"), ErrNotFound)
+	mm.posts["reply"].DeleteAt = 0
+	mm.canPost = false
+	assert.ErrorIs(t, b.SendExisting("alice", "reply"), ErrNoPermission)
+	assert.Empty(t, mm.created)
+}
+
+func TestAReplySentWithTheCheckboxIsNotSentAgainFromTheMenu(t *testing.T) {
+	mm := newFake()
+	r := reply("x", true)
+	mm.posts["reply"] = r
+	b := New(mm, func(string, ...any) {})
+	b.MessageHasBeenPosted(r)
+	require.Len(t, mm.created, 1)
+	assert.ErrorIs(t, b.SendExisting("alice", "reply"), ErrAlreadySent)
+
+	// Even if the mark were missing, the reply's own flag says it went out.
+	mm.sent = map[string]bool{}
+	assert.ErrorIs(t, b.SendExisting("alice", "reply"), ErrAlreadySent)
+	assert.Len(t, mm.created, 1)
+}
+
+func TestAFailedSendCanBeTriedAgain(t *testing.T) {
+	mm := newFake()
+	mm.posts["reply"] = reply("x", false)
+	mm.createErr = errors.New("database busy")
+	b := New(mm, func(string, ...any) {})
+	require.Error(t, b.SendExisting("alice", "reply"))
+	mm.createErr = nil
+	require.NoError(t, b.SendExisting("alice", "reply"))
+	assert.Len(t, mm.created, 1)
 }

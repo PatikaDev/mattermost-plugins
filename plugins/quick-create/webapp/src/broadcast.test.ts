@@ -1,7 +1,7 @@
 // Copyright (c) 2026-present Patika. All Rights Reserved.
 // See LICENSE for license information.
 
-import {alsoSend, markPost as mark, PROP_REQUESTED, type OutgoingPost} from './broadcast';
+import {alsoSend, canSendToChannel, markPost as mark, markSentFromMenu, PROP_REQUESTED, type OutgoingPost} from './broadcast';
 
 const markPost = (post: OutgoingPost) => mark(post);
 
@@ -32,5 +32,28 @@ describe('also send to channel', () => {
         markPost({root_id: 'root3'});
         expect(listener).toHaveBeenCalledTimes(2);
         unsubscribe();
+    });
+});
+
+describe('Also send to channel from the menu', () => {
+    const mine = {id: 'r1', root_id: 'root', user_id: 'me', type: '', delete_at: 0, pending_post_id: '', props: {}};
+
+    test('is offered for my own thread replies only', () => {
+        expect(canSendToChannel(mine, 'me')).toBe(true);
+        expect(canSendToChannel({...mine, user_id: 'bob'}, 'me')).toBe(false);
+        expect(canSendToChannel({...mine, root_id: ''}, 'me')).toBe(false); // already in the channel
+        expect(canSendToChannel({...mine, type: 'system_join_channel'}, 'me')).toBe(false);
+        expect(canSendToChannel({...mine, delete_at: 5}, 'me')).toBe(false);
+        expect(canSendToChannel({...mine, pending_post_id: 'r1'}, 'me')).toBe(false); // still sending
+        expect(canSendToChannel(undefined, 'me')).toBe(false);
+        expect(canSendToChannel(mine, '')).toBe(false);
+    });
+
+    test('is not offered again once the reply went to the channel', () => {
+        expect(canSendToChannel({...mine, id: 'r2', props: {[PROP_REQUESTED]: true}}, 'me')).toBe(false);
+        const r3 = {...mine, id: 'r3'};
+        expect(canSendToChannel(r3, 'me')).toBe(true);
+        markSentFromMenu('r3');
+        expect(canSendToChannel(r3, 'me')).toBe(false);
     });
 });

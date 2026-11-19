@@ -77,3 +77,7 @@ export function channelLabel(channelId: string): string {
     }
     return `~${channel.display_name || channel.name}`;
 }
+
+export function getPost(postId: string) {
+    return state()?.entities.posts.posts[postId];
+}
