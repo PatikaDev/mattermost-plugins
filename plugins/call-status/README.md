@@ -3,7 +3,8 @@
 Shows when someone is on a call, the way Slack shows a 🎧 next to people in a huddle.
 
 While a person is in a **Mattermost call** their custom status becomes **🎧 In a call**; while
-they're in a **Google Meet** started from Mattermost it becomes **📹 In a Google Meet**. The
+they're in a **Google Meet** started from Mattermost it becomes **In a Google Meet**, with Google
+Meet's logo (or 📹 until an admin adds the logo, see below). The
 status is Mattermost's own custom status, so the icon appears everywhere a name does — next to
 their messages, in the direct-message list, on their profile — in the web, desktop **and mobile**
 apps, and it goes away when the call ends.
@@ -24,6 +25,14 @@ detected. For scheduled meetings, the
 **📅 In a meeting**: each person connects their calendar and turns on *Set custom status
 automatically* in its settings.
 
+## Google Meet logo
+
+The Meet status uses the custom emoji `:google-meet:` when the server has one, and 📹 otherwise.
+To show the logo, an admin adds [`assets/google-meet.png`](assets/google-meet.png) once as a
+custom emoji named **google-meet** (emoji picker → **Custom Emoji** → **Add Custom Emoji**; needs
+**Enable Custom Emoji** on in the System Console). Statuses set from then on use it; a status
+already showing 📹 keeps it until that meeting ends.
+
 ## Rules
 
 - **Your own status always wins.** If you've set a status ("On vacation", or the calendar's "In a
@@ -34,7 +43,7 @@ automatically* in its settings.
 
 ## Requirements
 
-- Mattermost 10.11 or later (one build, tested on 11.7 and 12.0).
+- Mattermost 10.11 or later (one build, tested on 11.7, 12.0 and 12.1).
 - The Calls plugin (bundled with Mattermost) for calls; the Google Meet plugin for meetings.
   Either can be missing: that source is simply skipped.
 - Custom statuses on (**System Console → Site Configuration → Users and Teams → Enable Custom

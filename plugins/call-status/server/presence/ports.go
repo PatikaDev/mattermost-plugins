@@ -26,6 +26,8 @@ type Mattermost interface {
 	CanReadChannel(userID, channelID string) bool
 	SetCustomStatus(userID string, cs *model.CustomStatus) error
 	ClearCustomStatus(userID string) error
+	// HasCustomEmoji reports whether a custom emoji with that name exists and can be shown.
+	HasCustomEmoji(name string) bool
 }
 
 // Clock is the time source (fixed in tests).

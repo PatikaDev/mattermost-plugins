@@ -192,7 +192,7 @@ func (s *Service) apply(user *model.User, want Activity, replaceOurs bool) {
 	if !replaceOurs && hasStatus(user.GetCustomStatus(), s.clock.Now()) {
 		return // theirs; checked again next time, so it shows once theirs is gone
 	}
-	cs := StatusFor(want.Kind)
+	cs := s.status(want.Kind)
 	if err := s.mm.SetCustomStatus(user.Id, &cs); err != nil {
 		s.warn("Failed to set a call status", "user_id", user.Id, "err", err.Error())
 		return
@@ -220,10 +220,24 @@ func isOpenMeeting(post *model.Post) bool {
 	return !ended
 }
 
-// isStatus reports whether cs is the plugin's status for kind.
+// status returns the custom status shown for kind.
+func (s *Service) status(kind Kind) model.CustomStatus {
+	cs := statuses[kind]
+	if kind == KindMeet && !s.mm.HasCustomEmoji(MeetEmoji) {
+		cs.Emoji = MeetFallbackEmoji
+	}
+	return cs
+}
+
+// isStatus reports whether cs is the plugin's status for kind. A Meet status counts with either
+// emoji: the custom emoji may have been added or removed since the status was set, and earlier
+// versions always used the fallback.
 func isStatus(cs *model.CustomStatus, kind Kind) bool {
-	want := StatusFor(kind)
-	return cs != nil && cs.Emoji == want.Emoji && cs.Text == want.Text
+	want := statuses[kind]
+	if cs == nil || cs.Text != want.Text {
+		return false
+	}
+	return cs.Emoji == want.Emoji || (kind == KindMeet && cs.Emoji == MeetFallbackEmoji)
 }
 
 // hasStatus reports whether cs is a status that is set and not yet expired.

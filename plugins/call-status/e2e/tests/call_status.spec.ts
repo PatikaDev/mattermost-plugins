@@ -1,4 +1,6 @@
 import {execFileSync} from 'node:child_process';
+import {readFileSync} from 'node:fs';
+import path from 'node:path';
 
 import {test, expect, type Page} from '@playwright/test';
 
@@ -61,6 +63,30 @@ const waitForStatus = (page: Page, userId: string, text: string | null) => waitF
 }, 45_000);
 
 const setOwnStatus = (page: Page, cs: CustomStatus | null) => (cs ? api(page, 'PUT', '/users/me/status/custom', cs) : api(page, 'DELETE', '/users/me/status/custom'));
+
+// The Google Meet logo an admin adds as the :google-meet: custom emoji (see the README).
+const MEET_LOGO = path.join(__dirname, '../../assets/google-meet.png');
+
+async function removeEmoji(page: Page, name: string) {
+    const emoji = await api(page, 'GET', `/emoji/name/${name}`);
+    if (emoji?.name === name) { // a 404 body has an id too (the error code)
+        await api(page, 'DELETE', `/emoji/${emoji.id}`);
+    }
+}
+
+// Adds a custom emoji the way the web app's Custom Emoji page does (a multipart upload).
+async function addEmoji(page: Page, name: string, file: string) {
+    const me = await api(page, 'GET', '/users/me');
+    const status = await page.evaluate(async ([n, creator, b64]) => {
+        const csrf = document.cookie.split('; ').find((c) => c.startsWith('MMCSRF='))?.split('=')[1] || '';
+        const form = new FormData();
+        form.append('image', new Blob([Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], {type: 'image/png'}), `${n}.png`);
+        form.append('emoji', JSON.stringify({name: n, creator_id: creator}));
+        const res = await fetch('/api/v4/emoji', {method: 'POST', headers: {'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-Token': csrf}, body: form});
+        return res.status;
+    }, [name, me.id, readFileSync(file).toString('base64')] as const);
+    expect(status).toBe(201);
+}
 
 async function clickAndCloseTab(page: Page, link: ReturnType<Page['locator']>) {
     const popup = page.context().waitForEvent('page', {timeout: 5000}).catch(() => null);
@@ -128,28 +154,40 @@ test.describe('Call status', () => {
         await member.context.close();
     });
 
-    test('starting or joining a Google Meet shows 📹 until the meeting ends', async ({browser}) => {
+    test('starting or joining a Google Meet shows the Meet status until the meeting ends: 📹, or the :google-meet: logo once added', async ({browser}) => {
         const admin = await newSession(browser, 'admin');
         const member = await newSession(browser, 'member');
         await setOwnStatus(admin.page, null);
         await setOwnStatus(member.page, null);
+        await removeEmoji(admin.page, 'google-meet');
 
         // A meeting message as the Google Meet plugin posts it, by whoever started the meeting.
+        // No :google-meet: emoji on the server yet, so the status falls back to 📹.
         const meet = await postAs(admin.page, 'I have started a meeting: https://meet.google.com/abc-defg-hij', {
             type: 'custom_google_meet',
             props: {meeting_link: 'https://meet.google.com/abc-defg-hij', meeting_topic: ''},
         });
         await waitForStatus(admin.page, admin.me.id, 'In a Google Meet');
+        expect((await customStatus(admin.page, admin.me.id))?.emoji).toBe('video_camera');
 
-        // The member clicks the meeting link in the message.
+        // An admin adds the logo; the member clicks the meeting link in the message.
+        await addEmoji(admin.page, 'google-meet', MEET_LOGO);
         await openChannel(member.page, 'town-square');
         const link = member.page.locator(`#post_${meet.id} a[href^="https://meet.google.com/"]`).first();
         await expect(link).toBeVisible();
         await clickAndCloseTab(member.page, link);
         await waitForStatus(admin.page, member.me.id, 'In a Google Meet');
-        expect((await customStatus(admin.page, member.me.id))?.emoji).toBe('video_camera');
+        expect((await customStatus(admin.page, member.me.id))?.emoji).toBe('google-meet');
 
-        // The Google Meet plugin marks the message when the meeting ends.
+        // What others see: the logo next to the member's name on their post.
+        const memberPost = await postAs(member.page, 'Joined the meeting');
+        await openChannel(admin.page, 'town-square');
+        const post = admin.page.locator(`#post_${memberPost.id}`);
+        await expect(post).toBeVisible();
+        const emoji = post.locator('[data-emoticon="google-meet"]').first();
+        await expect(emoji, `status emoji next to the name; post HTML: ${(await post.innerHTML()).slice(0, 1500)}`).toBeVisible({timeout: 20_000});
+
+        // The Google Meet plugin marks the message when the meeting ends: both statuses go.
         await api(admin.page, 'PUT', `/posts/${meet.id}/patch`, {props: {meeting_link: 'https://meet.google.com/abc-defg-hij', meeting_ended: true}});
         await waitForStatus(admin.page, member.me.id, null);
         await waitForStatus(admin.page, admin.me.id, null);

@@ -86,3 +86,9 @@ func (a mattermostAdapter) ClearCustomStatus(userID string) error {
 	}
 	return nil
 }
+
+// HasCustomEmoji is false when custom emoji are turned off, as the lookup then fails too.
+func (a mattermostAdapter) HasCustomEmoji(name string) bool {
+	emoji, appErr := a.p.API.GetEmojiByName(name)
+	return appErr == nil && emoji != nil
+}

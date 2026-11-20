@@ -51,7 +51,10 @@ type fakeMM struct {
 	posts    map[string]*model.Post
 	canRead  bool
 	sets     int
+	emoji    map[string]bool
 }
+
+func (f *fakeMM) HasCustomEmoji(name string) bool { return f.emoji[name] }
 
 func (f *fakeMM) UsersInCalls() (map[string]string, error) { return f.calls, f.callsErr }
 
@@ -196,6 +199,33 @@ func TestMeetJoinUntilMeetingEnds(t *testing.T) {
 	f.reconcile(t)
 	assert.Nil(t, f.status("u1"))
 	assert.Empty(t, f.store.joins)
+}
+
+func TestMeetShowsTheMeetEmojiOnceAdded(t *testing.T) {
+	f := newFixture(t, "u1", "u2")
+	f.mm.posts["p1"] = meetPost("p1")
+	require.NoError(t, f.svc.JoinedMeet("u1", "p1"))
+	assert.Equal(t, MeetFallbackEmoji, f.status("u1").Emoji)
+
+	f.mm.emoji = map[string]bool{MeetEmoji: true}
+	require.NoError(t, f.svc.JoinedMeet("u2", "p1"))
+	assert.Equal(t, MeetEmoji, f.status("u2").Emoji)
+	assert.True(t, isStatus(f.status("u2"), KindMeet))
+}
+
+func TestMeetStatusWithEitherEmojiIsClearedWhenItEnds(t *testing.T) {
+	// u1's status was set before the emoji was added (or by an earlier version), u2's after.
+	f := newFixture(t, "u1", "u2")
+	f.mm.posts["p1"] = meetPost("p1")
+	require.NoError(t, f.svc.JoinedMeet("u1", "p1"))
+	f.mm.emoji = map[string]bool{MeetEmoji: true}
+	require.NoError(t, f.svc.JoinedMeet("u2", "p1"))
+
+	f.mm.posts["p1"].AddProp("meeting_ended", true)
+	f.reconcile(t)
+	assert.Nil(t, f.status("u1"))
+	assert.Nil(t, f.status("u2"))
+	assert.Empty(t, f.store.tracked)
 }
 
 func TestMeetJoinExpires(t *testing.T) {

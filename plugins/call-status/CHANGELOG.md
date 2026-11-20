@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+- **In a Google Meet** shows Google Meet's logo once an admin adds it as the `:google-meet:` custom
+  emoji (the image is in `assets/google-meet.png`); without it the status keeps 📹. Statuses set
+  with 📹, including by 1.0.0, are still cleared when their meeting ends.
+
 ## [1.0.0] — 2026-11-16
 
 ### Added

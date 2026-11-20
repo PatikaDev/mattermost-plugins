@@ -24,14 +24,18 @@ const MeetPostType = "custom_google_meet"
 // reported (the Google Meet plugin only learns it if conference polling works for that meeting).
 const MeetMaxAge = 2 * time.Hour
 
+// MeetEmoji is the custom emoji (Google Meet's logo) the Meet status shows once an admin has
+// added it to the server; without it the status shows MeetFallbackEmoji.
+const (
+	MeetEmoji         = "google-meet"
+	MeetFallbackEmoji = "video_camera"
+)
+
 // statuses are the custom statuses the plugin sets. Emoji are Mattermost emoji names.
 var statuses = map[Kind]model.CustomStatus{
 	KindCall: {Emoji: "headphones", Text: "In a call"},
-	KindMeet: {Emoji: "video_camera", Text: "In a Google Meet"},
+	KindMeet: {Emoji: MeetEmoji, Text: "In a Google Meet"},
 }
-
-// StatusFor returns the custom status shown for kind.
-func StatusFor(kind Kind) model.CustomStatus { return statuses[kind] }
 
 // Activity is one thing a user is in; Key tells two calls or meetings apart.
 type Activity struct {
