@@ -83,9 +83,9 @@ async function addEmoji(page: Page, name: string, file: string) {
         form.append('image', new Blob([Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], {type: 'image/png'}), `${n}.png`);
         form.append('emoji', JSON.stringify({name: n, creator_id: creator}));
         const res = await fetch('/api/v4/emoji', {method: 'POST', headers: {'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-Token': csrf}, body: form});
-        return res.status;
+        return res.ok ? 'ok' : `${res.status} ${await res.text()}`;
     }, [name, me.id, readFileSync(file).toString('base64')] as const);
-    expect(status).toBe(201);
+    expect(status).toBe('ok');
 }
 
 async function clickAndCloseTab(page: Page, link: ReturnType<Page['locator']>) {
